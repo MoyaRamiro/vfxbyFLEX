@@ -1,5 +1,6 @@
 ---
 import Base from '../layouts/Base.astro';
+import Hero from '../components/Hero.astro';
 import { SITE } from '../config/site';
 ---
 
@@ -8,7 +9,7 @@ import { SITE } from '../config/site';
   description="Cotizá tu VFX, visualizer o montaje con Flex. Configurá tu pedido y envialo directo por WhatsApp."
 >
   <main>
-    <section id="hero" class="min-h-screen grid place-items-center"></section>
+    <Hero />
     <section id="destacados"></section>
     <section id="servicios"></section>
   </main>
