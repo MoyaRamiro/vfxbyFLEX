@@ -1,9 +1,18 @@
 ---
 import Base from '../layouts/Base.astro';
+import { SITE } from '../config/site';
 ---
 
-<Base title="VFXBYFLEX — Servicios de VFX, Visualizers y Montaje" description="Cotizá tu VFX, visualizer o montaje con Flex. Configurá tu pedido y envialo directo por WhatsApp.">
-  <main class="min-h-screen grid place-items-center">
-    <p class="text-2xl font-bold">VFXBYFLEX</p>
+<Base
+  title="VFXBYFLEX — Servicios de VFX, Visualizers y Montaje"
+  description="Cotizá tu VFX, visualizer o montaje con Flex. Configurá tu pedido y envialo directo por WhatsApp."
+>
+  <main>
+    <section id="hero" class="min-h-screen grid place-items-center"></section>
+    <section id="destacados"></section>
+    <section id="servicios"></section>
   </main>
+  <footer id="footer">
+    <a href={SITE.instagramUrl} target="_blank" rel="noopener noreferrer">Instagram</a>
+  </footer>
 </Base>
