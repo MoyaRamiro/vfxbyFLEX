@@ -85,8 +85,10 @@ export function buildCromaItem(entornos: number, nivel: 'pro' | 'full'): CartIte
   return {
     key: itemKeyFor('croma'),
     serviceId: 'croma',
-    label: Croma ( entornos, VFX ),
+    label: `Croma (${entornos} entornos, VFX ${nivel === 'pro' ? 'Pro' : 'Full'})`,
     price: cromaPrice(entornos, nivel),
     meta: { entornos, nivel },
   };
 }
+
+

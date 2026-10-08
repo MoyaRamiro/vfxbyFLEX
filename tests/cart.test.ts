@@ -1,7 +1,8 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+﻿import { beforeEach, describe, expect, it } from 'vitest';
 import {
   addItem,
   CART_EVENT,
+  buildCromaItem,
   dispatchCartChange,
   emptyCart,
   itemKeyFor,
@@ -141,5 +142,25 @@ describe('cart', () => {
     const state = addItem(emptyCart(), visualizer);
     dispatchCartChange(state);
     expect(seen).toEqual([state]);
+  });
+});
+
+
+
+
+
+
+
+describe('buildCromaItem', () => {
+  it('builds the default croma item', () => {
+    const item = buildCromaItem(2, 'pro');
+    expect(item.label).toBe('Croma (2 entornos, VFX Pro)');
+    expect(item.price).toBe(35);
+    expect(item.meta).toEqual({ entornos: 2, nivel: 'pro' });
+  });
+  it('prices VFX Full with extra environments', () => {
+    const item = buildCromaItem(3, 'full');
+    expect(item.label).toBe('Croma (3 entornos, VFX Full)');
+    expect(item.price).toBe(75);
   });
 });
