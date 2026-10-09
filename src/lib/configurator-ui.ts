@@ -25,7 +25,7 @@ function syncUI(state: CartState): void {
     const inCart =
       service === 'extras'
         ? state.items.some((i) => i.key === option)
-        : state.items.some((i) => i.key === itemKeyFor(service));
+        : state.items.some((i) => i.key === itemKeyFor(service) && i.label === btn.dataset.label);
     btn.classList.toggle('border-ink', inCart);
     btn.classList.toggle('border-ink/20', !inCart);
     if (btn.hasAttribute('aria-pressed')) btn.setAttribute('aria-pressed', String(inCart));
@@ -90,10 +90,11 @@ export function initConfigurator(): void {
       const option = btn.dataset.option!;
       const key = service === 'extras' ? option : itemKeyFor(service);
       const state = current();
-      const exists = state.items.some((i) => i.key === key);
-      const next = exists
-        ? removeItem(state, key)
-        : addItem(state, { key, serviceId: service, label, price });
+      const existing = state.items.find((i) => i.key === key);
+      const next =
+        existing && existing.label === label
+          ? removeItem(state, key)
+          : addItem(state, { key, serviceId: service, label, price });
       commit(next);
     });
   });
