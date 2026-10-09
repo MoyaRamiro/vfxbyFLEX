@@ -1,0 +1,106 @@
+---
+import { SERVICES, CROMA_ENTORNOS_OPTIONS, PACKAGE_PRICES } from '../data/services';
+---
+
+<section id="servicios" class="px-6 md:px-10 py-24 md:py-32 bg-surface">
+  <div class="max-w-6xl mx-auto">
+    <div class="flex items-end justify-between mb-4">
+      <h2 class="servicios-title text-4xl md:text-6xl font-bold">Configurá tu pedido</h2>
+      <span class="hidden md:block font-mono text-sm text-muted">TIMELINE · SERVICIOS</span>
+    </div>
+    <p class="text-muted mb-12 max-w-xl">Elegí los servicios que necesitás. El total se actualiza en vivo y al terminar lo mandás por WhatsApp.</p>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+      {SERVICES.map((service) => (
+        <article
+          class="service-card border-2 border-ink bg-paper p-6 flex flex-col gap-4"
+          data-service={service.id}
+        >
+          <header>
+            <h3 class="text-2xl font-bold">{service.name}</h3>
+            <p class="text-sm text-muted mt-1">{service.tagline}</p>
+          </header>
+
+          {service.kind === 'select' && service.id !== 'croma' && service.id !== 'extras' && (
+            <div class="flex flex-col gap-2" role="radiogroup" aria-label={service.name}>
+              {service.options.map((o) => (
+                <button
+                  type="button"
+                  class="service-option flex items-center justify-between border-2 border-ink/20 px-4 py-3 text-left hover:border-ink transition-colors"
+                  data-service={service.id}
+                  data-option={o.id}
+                  data-label={o.label}
+                  data-price={o.price}
+                  role="radio"
+                  aria-checked="false"
+                >
+                  <span>{o.label}</span>
+                  <span class="font-mono font-bold">USD {o.price}</span>
+                </button>
+              ))}
+            </div>
+          )}
+
+          {service.id === 'croma' && (
+            <div class="flex flex-col gap-4" data-croma>
+              <label class="flex flex-col gap-1 text-sm font-medium">
+                Cantidad de entornos
+                <select
+                  class="croma-entornos border-2 border-ink px-3 py-2 bg-paper"
+                  aria-label="Cantidad de entornos"
+                >
+                  {CROMA_ENTORNOS_OPTIONS.map((n) => (
+                    <option value={n}>{n} entornos</option>
+                  ))}
+                </select>
+              </label>
+              <div class="flex gap-2" role="radiogroup" aria-label="Nivel de VFX del croma">
+                <button type="button" class="croma-nivel flex-1 border-2 border-ink px-3 py-2 font-bold" data-nivel="pro" role="radio" aria-checked="true">VFX Pro</button>
+                <button type="button" class="croma-nivel flex-1 border-2 border-ink/20 px-3 py-2 font-bold" data-nivel="full" role="radio" aria-checked="false">VFX Full <span class="text-muted font-normal">(+25)</span></button>
+              </div>
+              <button
+                type="button"
+                class="croma-add bg-ink text-paper font-bold py-3 hover:bg-lime hover:text-ink transition-colors"
+                data-service="croma"
+              >
+                Agregar — <span class="croma-price font-mono">USD 35</span>
+              </button>
+            </div>
+          )}
+
+          {service.kind === 'package' && (
+            <button
+              type="button"
+              class="package-toggle mt-auto border-2 border-ink px-4 py-3 font-bold hover:bg-ink hover:text-paper transition-colors"
+              data-service={service.id}
+              data-label={service.name}
+              data-price={PACKAGE_PRICES[service.id as keyof typeof PACKAGE_PRICES]}
+              aria-pressed="false"
+            >
+              Agregar
+            </button>
+          )}
+
+          {service.id === 'extras' && (
+            <div class="flex flex-col gap-2">
+              {service.options.map((o) => (
+                <button
+                  type="button"
+                  class="service-option flex items-center justify-between border-2 border-ink/20 px-4 py-3 text-left hover:border-ink transition-colors"
+                  data-service="extras"
+                  data-option={o.id}
+                  data-label={o.label}
+                  data-price={o.price}
+                  aria-pressed="false"
+                >
+                  <span>{o.label}</span>
+                  <span class="font-mono font-bold">USD {o.price}</span>
+                </button>
+              ))}
+            </div>
+          )}
+        </article>
+      ))}
+    </div>
+  </div>
+</section>
