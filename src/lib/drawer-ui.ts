@@ -72,9 +72,9 @@ function renderItems(state: CartState): void {
               ${CROMA_ENTORNOS_OPTIONS.map((n) => `<option value="${n}"${n === entornos ? ' selected' : ''}>${n}</option>`).join('')}
             </select>
           </label>
-          <div class="flex gap-2 text-xs">
-            <button type="button" class="drawer-croma-nivel border-2 px-2 py-1 font-bold${nivel !== 'full' ? ' border-ink bg-ink text-paper' : ' border-ink/20'}" data-nivel="pro">Pro</button>
-            <button type="button" class="drawer-croma-nivel border-2 px-2 py-1 font-bold${nivel === 'full' ? ' border-ink bg-ink text-paper' : ' border-ink/20'}" data-nivel="full">Full (+25)</button>
+          <div class="flex gap-2 text-xs" role="radiogroup" aria-label="Nivel de VFX del croma">
+            <button type="button" class="drawer-croma-nivel border-2 px-2 py-1 font-bold${nivel !== 'full' ? ' border-ink bg-ink text-paper' : ' border-ink/20'}" data-nivel="pro" role="radio" aria-checked="${nivel !== 'full'}">Pro</button>
+            <button type="button" class="drawer-croma-nivel border-2 px-2 py-1 font-bold${nivel === 'full' ? ' border-ink bg-ink text-paper' : ' border-ink/20'}" data-nivel="full" role="radio" aria-checked="${nivel === 'full'}">Full (+25)</button>
           </div>
         </div>`
           : '';

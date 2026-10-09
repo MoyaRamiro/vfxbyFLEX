@@ -81,7 +81,7 @@ function flyChip(from: HTMLElement): void {
 
   const chip = document.createElement('div');
   chip.className = 'fixed z-[70] bg-lime text-ink font-bold px-3 py-1 text-sm pointer-events-none';
-  chip.textContent = from.textContent?.split('—')[0]?.trim() ?? '+';
+  chip.textContent = from.dataset.label?.trim() || from.textContent?.split('—')[0]?.trim() || '+';
   const r = from.getBoundingClientRect();
   chip.style.left = `${r.left}px`;
   chip.style.top = `${r.top}px`;
