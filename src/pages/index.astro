@@ -1,19 +1,20 @@
----
+﻿---
 import Base from '../layouts/Base.astro';
 import Hero from '../components/Hero.astro';
+import Destacados from '../components/Destacados.astro';
 import { SITE } from '../config/site';
 ---
 
 <Base
-  title="VFXBYFLEX — Servicios de VFX, Visualizers y Montaje"
-  description="Cotizá tu VFX, visualizer o montaje con Flex. Configurá tu pedido y envialo directo por WhatsApp."
+  title= VFXBYFLEX - Servicios de VFX, Visualizers y Montaje
+  description=Cotizá tu VFX, visualizer o montaje con Flex. Configurá tu pedido y envialo directo por WhatsApp.
 >
   <main>
     <Hero />
-    <section id="destacados"></section>
-    <section id="servicios"></section>
+    <Destacados />
+    <section id=servicios></section>
   </main>
-  <footer id="footer">
-    <a href={SITE.instagramUrl} target="_blank" rel="noopener noreferrer">Instagram</a>
+  <footer id=footer>
+    <a href={SITE.instagramUrl} target=_blank rel=noopener noreferrer>Instagram</a>
   </footer>
 </Base>
