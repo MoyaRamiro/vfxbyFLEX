@@ -2,37 +2,37 @@
 import { PROJECTS } from '../data/projects';
 ---
 
-<section id= destacados class=px-6 md:px-10 py-24 md:py-32>
-  <div class=max-w-6xl mx-auto>
-    <div class=flex items-end justify-between mb-12>
-      <h2 class=destacados-title text-4xl md:text-6xl font-bold>Destacados</h2>
-      <span class=hidden md:block font-mono text-sm text-muted>SELECTS � 2026</span>
+<section id="destacados" class="px-6 md:px-10 py-24 md:py-32">
+  <div class="max-w-6xl mx-auto">
+    <div class="flex items-end justify-between mb-12">
+      <h2 class="destacados-title text-4xl md:text-6xl font-bold">Destacados</h2>
+      <span class="hidden md:block font-mono text-sm text-muted">SELECTS · 2026</span>
     </div>
 
-    <div class=grid grid-cols-1 sm:grid-cols-2 gap-6>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
       {PROJECTS.map((p, i) => (
         <a
           href={p.url}
-          target=_blank
-          rel=noopener noreferrer
-          class=project-card group relative block overflow-hidden border-2 border-ink bg-surface aspect-video magnetic
+          target="_blank"
+          rel="noopener noreferrer"
+          class="project-card group relative block overflow-hidden border-2 border-ink bg-surface aspect-video magnetic"
         >
-          <div class=project-thumb absolute inset-0 overflow-hidden>
+          <div class="project-thumb absolute inset-0 overflow-hidden">
             <img
               src={p.thumbnail}
               alt={p.title}
-              class=h-full w-full object-cover transition-transform duration-500 group-hover:scale-105
-              loading=lazy
+              class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+              loading="lazy"
             />
           </div>
-          <div class=project-glitch absolute inset-0 opacity-0 bg-cyan mix-blend-multiply transition-opacity duration-100 group-hover:opacity-30></div>
-          <div class=absolute inset-x-0 bottom-0 flex items-center justify-between p-4 bg-paper/90 backdrop-blur-sm border-t-2 border-ink>
-            <span class=font-bold>{p.title}</span>
-            <span class=project-timecode font-mono text-xs text-muted opacity-0 group-hover:opacity-100 transition-opacity>
+          <div class="project-glitch absolute inset-0 opacity-0 bg-cyan mix-blend-multiply transition-opacity duration-100 group-hover:opacity-30"></div>
+          <div class="absolute inset-x-0 bottom-0 flex items-center justify-between p-4 bg-paper/90 backdrop-blur-sm border-t-2 border-ink">
+            <span class="font-bold">{p.title}</span>
+            <span class="project-timecode font-mono text-xs text-muted opacity-0 group-hover:opacity-100 transition-opacity">
               00:{String(i * 7 + 12).padStart(2, '0')}:0{i + 3}
             </span>
           </div>
-          <span class=absolute top-3 right-3 bg-lime text-ink text-xs font-bold px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity>VER REEL ?</span>
+          <span class="absolute top-3 right-3 bg-lime text-ink text-xs font-bold px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity">VER REEL ↗</span>
         </a>
       ))}
     </div>
