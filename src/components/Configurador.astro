@@ -71,13 +71,14 @@ import { SERVICES, CROMA_ENTORNOS_OPTIONS, PACKAGE_PRICES } from '../data/servic
           {service.kind === 'package' && (
             <button
               type="button"
-              class="package-toggle mt-auto border-2 border-ink px-4 py-3 font-bold hover:bg-ink hover:text-paper transition-colors"
+              class="package-toggle mt-auto flex items-center justify-between border-2 border-ink px-4 py-3 font-bold hover:bg-ink hover:text-paper transition-colors"
               data-service={service.id}
               data-label={service.name}
               data-price={PACKAGE_PRICES[service.id as keyof typeof PACKAGE_PRICES]}
               aria-pressed="false"
             >
-              Agregar
+              <span class="package-toggle-label">Agregar</span>
+              <span class="font-mono package-toggle-price">USD {PACKAGE_PRICES[service.id as keyof typeof PACKAGE_PRICES]}</span>
             </button>
           )}
 

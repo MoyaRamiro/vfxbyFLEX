@@ -20,3 +20,5 @@ Sitio de cotización para el editor de VFX Flex. Astro estático, sin backend: e
 ## Deploy
 
 Sube a Netlify o Cloudflare Pages apuntando al repo. Build: `npm run build`, publish: `dist`. No necesita variables de entorno.
+
+Actualizá `site` en `astro.config.mjs` con el dominio real una vez deployado (se usa para canonical y `og:image`).

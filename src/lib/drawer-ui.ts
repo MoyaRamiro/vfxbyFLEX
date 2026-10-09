@@ -1,4 +1,6 @@
 import {
+  addItem,
+  buildCromaItem,
   dispatchCartChange,
   loadCart,
   removeItem,
@@ -8,6 +10,7 @@ import {
   type CartState,
 } from './cart';
 import { SITE } from '../config/site';
+import { CROMA_ENTORNOS_OPTIONS } from '../data/services';
 import { buildMessage, buildWhatsAppUrl } from './whatsapp';
 
 let lastTrigger: HTMLElement | null = null;
@@ -53,22 +56,51 @@ function renderItems(state: CartState): void {
   const key = JSON.stringify(state.items);
   if (key === renderedKey) return;
   const prevTotal = Number(e.total.textContent?.replace(/\D/g, '') ?? 0);
+  const prevCount = Number(e.badge.textContent) || 0;
 
   e.list.innerHTML = state.items
-    .map(
-      (i) => `
-      <li class="flex items-center justify-between gap-3 border-2 border-ink/20 px-4 py-3">
-        <div>
-          <p class="font-bold">${i.label}</p>
-          <p class="font-mono text-sm text-muted">USD ${i.price}</p>
+    .map((i) => {
+      const meta = (i.meta ?? {}) as { entornos?: number; nivel?: 'pro' | 'full' };
+      const entornos = meta.entornos ?? 2;
+      const nivel = meta.nivel ?? 'pro';
+      const editor =
+        i.serviceId === 'croma' || i.key === 'croma'
+          ? `
+        <div class="drawer-croma flex flex-col gap-2 mt-2" data-key="croma">
+          <label class="text-xs font-medium">Entornos
+            <select class="drawer-croma-entornos border-2 border-ink px-2 py-1 bg-paper text-sm">
+              ${CROMA_ENTORNOS_OPTIONS.map((n) => `<option value="${n}"${n === entornos ? ' selected' : ''}>${n}</option>`).join('')}
+            </select>
+          </label>
+          <div class="flex gap-2 text-xs">
+            <button type="button" class="drawer-croma-nivel border-2 px-2 py-1 font-bold${nivel !== 'full' ? ' border-ink bg-ink text-paper' : ' border-ink/20'}" data-nivel="pro">Pro</button>
+            <button type="button" class="drawer-croma-nivel border-2 px-2 py-1 font-bold${nivel === 'full' ? ' border-ink bg-ink text-paper' : ' border-ink/20'}" data-nivel="full">Full (+25)</button>
+          </div>
+        </div>`
+          : '';
+      return `
+      <li class="border-2 border-ink/20 px-4 py-3">
+        <div class="flex items-center justify-between gap-3">
+          <div>
+            <p class="font-bold">${i.label}</p>
+            <p class="font-mono text-sm text-muted">USD ${i.price}</p>
+          </div>
+          <button type="button" class="cart-remove border-2 border-ink w-8 h-8 text-sm hover:bg-ink hover:text-paper transition-colors" data-key="${i.key}" aria-label="Quitar ${i.label}">✕</button>
         </div>
-        <button type="button" class="cart-remove border-2 border-ink w-8 h-8 text-sm hover:bg-ink hover:text-paper transition-colors" data-key="${i.key}" aria-label="Quitar ${i.label}">✕</button>
-      </li>`
-    )
+        ${editor}
+      </li>`;
+    })
     .join('');
 
   e.empty.hidden = state.items.length > 0;
   e.badge.textContent = String(state.items.length);
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (state.items.length > prevCount && !reduce) {
+    e.badge.animate(
+      [{ transform: 'scale(1)' }, { transform: 'scale(1.35)' }, { transform: 'scale(1)' }],
+      { duration: 300, easing: 'cubic-bezier(0.34, 1.56, 0.64, 1)' }
+    );
+  }
   const sum = state.items.reduce((a, i) => a + i.price, 0);
   animateTotal(prevTotal, sum);
 
@@ -77,6 +109,26 @@ function renderItems(state: CartState): void {
       const next = removeItem(loadCart(), btn.dataset.key!);
       saveCart(next);
       dispatchCartChange(next);
+    });
+  });
+
+  e.list.querySelectorAll<HTMLElement>('.drawer-croma').forEach((row) => {
+    const select = row.querySelector<HTMLSelectElement>('.drawer-croma-entornos');
+    const nivelButtons = row.querySelectorAll<HTMLButtonElement>('.drawer-croma-nivel');
+    if (!select) return;
+    const commitCroma = (nivel: 'pro' | 'full'): void => {
+      const next = addItem(loadCart(), buildCromaItem(Number(select.value), nivel));
+      saveCart(next);
+      dispatchCartChange(next);
+    };
+    select.addEventListener('change', () => {
+      const active = Array.from(nivelButtons).find((b) => b.classList.contains('bg-ink'));
+      commitCroma((active?.dataset.nivel as 'pro' | 'full') ?? 'pro');
+    });
+    nivelButtons.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        commitCroma(btn.dataset.nivel as 'pro' | 'full');
+      });
     });
   });
 

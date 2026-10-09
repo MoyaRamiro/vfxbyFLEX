@@ -24,3 +24,21 @@ test('2 Reels excluye 1 Reel', async ({ page }) => {
   await expect(items).toHaveCount(1);
   await expect(items.first()).toContainText('2 Reels');
 });
+
+test('precio del paquete visible antes y después de agregar', async ({ page }) => {
+  await page.goto('/');
+  const pkg = page.locator('.package-toggle[data-service="vfx-pro"]');
+  await expect(pkg).toContainText('USD 45');
+  await pkg.click();
+  await expect(pkg).toContainText('Agregado ✓');
+  await expect(pkg).toContainText('USD 45');
+});
+
+test('editar croma inline desde el drawer actualiza el total', async ({ page }) => {
+  await page.goto('/');
+  await page.locator('.croma-add').click();
+  await page.locator('#cart-button').click();
+  await expect(page.locator('#cart-total')).toHaveText('USD 35');
+  await page.locator('.drawer-croma-entornos').selectOption('4');
+  await expect(page.locator('#cart-total')).toHaveText('USD 65');
+});

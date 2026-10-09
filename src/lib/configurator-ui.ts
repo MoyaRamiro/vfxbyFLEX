@@ -36,10 +36,29 @@ function syncUI(state: CartState): void {
     const key = itemKeyFor(btn.dataset.service!);
     const active = state.items.some((i) => i.key === key);
     btn.setAttribute('aria-pressed', String(active));
-    btn.textContent = active ? 'Agregado ✓' : 'Agregar';
+    const labelEl = btn.querySelector<HTMLElement>('.package-toggle-label');
+    if (labelEl) labelEl.textContent = active ? 'Agregado ✓' : 'Agregar';
     btn.classList.toggle('bg-ink', active);
     btn.classList.toggle('text-paper', active);
   });
+
+  const cromaItem = state.items.find((i) => i.key === 'croma' || i.serviceId === 'croma');
+  if (cromaItem) {
+    const wrap = document.querySelector<HTMLElement>('[data-croma]');
+    if (wrap) {
+      const meta = (cromaItem.meta ?? {}) as { entornos?: number; nivel?: 'pro' | 'full' };
+      const entornos = meta.entornos ?? 2;
+      const nivel = meta.nivel ?? 'pro';
+      const select = wrap.querySelector<HTMLSelectElement>('.croma-entornos');
+      if (select) select.value = String(entornos);
+      wrap.querySelectorAll<HTMLElement>('.croma-nivel').forEach((b) => {
+        const active = b.dataset.nivel === nivel;
+        b.setAttribute('aria-checked', String(active));
+        b.classList.toggle('border-ink', active);
+        b.classList.toggle('border-ink/20', !active);
+      });
+    }
+  }
 
   updateCromaPriceLabel();
 }
@@ -91,11 +110,12 @@ export function initConfigurator(): void {
       const key = service === 'extras' ? option : itemKeyFor(service);
       const state = current();
       const existing = state.items.find((i) => i.key === key);
-      const next =
-        existing && existing.label === label
-          ? removeItem(state, key)
-          : addItem(state, { key, serviceId: service, label, price });
-      commit(next);
+      if (existing && existing.label === label) {
+        commit(removeItem(state, key));
+      } else {
+        commit(addItem(state, { key, serviceId: service, label, price }));
+        flyChip(btn);
+      }
     });
   });
 
@@ -104,15 +124,19 @@ export function initConfigurator(): void {
       const key = itemKeyFor(btn.dataset.service!);
       const state = current();
       const exists = state.items.some((i) => i.key === key);
-      const next = exists
-        ? removeItem(state, key)
-        : addItem(state, {
+      if (exists) {
+        commit(removeItem(state, key));
+      } else {
+        commit(
+          addItem(state, {
             key,
             serviceId: btn.dataset.service!,
             label: btn.dataset.label!,
             price: Number(btn.dataset.price),
-          });
-      commit(next);
+          })
+        );
+        flyChip(btn);
+      }
     });
   });
 
