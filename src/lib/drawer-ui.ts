@@ -16,6 +16,22 @@ import { buildMessage, buildWhatsAppUrl } from './whatsapp';
 let lastTrigger: HTMLElement | null = null;
 let renderedKey = '';
 
+function escapeHtml(value: unknown): string {
+  return String(value).replace(
+    /[&<>"']/g,
+    (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c] as string)
+  );
+}
+
+function setBackgroundInert(on: boolean): void {
+  ['main', 'footer'].forEach((sel) => {
+    const el = document.querySelector(sel);
+    if (!el) return;
+    if (on) el.setAttribute('inert', '');
+    else el.removeAttribute('inert');
+  });
+}
+
 function els() {
   return {
     button: document.getElementById('cart-button')!,
@@ -82,10 +98,10 @@ function renderItems(state: CartState): void {
       <li class="border-2 border-ink/20 px-4 py-3">
         <div class="flex items-center justify-between gap-3">
           <div>
-            <p class="font-bold">${i.label}</p>
+            <p class="font-bold">${escapeHtml(i.label)}</p>
             <p class="font-mono text-sm text-muted">USD ${i.price}</p>
           </div>
-          <button type="button" class="cart-remove border-2 border-ink w-8 h-8 text-sm hover:bg-ink hover:text-paper transition-colors" data-key="${i.key}" aria-label="Quitar ${i.label}">✕</button>
+          <button type="button" class="cart-remove border-2 border-ink w-8 h-8 text-sm hover:bg-ink hover:text-paper transition-colors" data-key="${escapeHtml(i.key)}" aria-label="Quitar ${escapeHtml(i.label)}">✕</button>
         </div>
         ${editor}
       </li>`;
@@ -163,6 +179,7 @@ function openDrawer(): void {
   e.drawer.removeAttribute('inert');
   e.drawer.setAttribute('aria-hidden', 'false');
   e.overlay.classList.remove('opacity-0', 'pointer-events-none');
+  setBackgroundInert(true);
   e.close.focus();
   document.body.style.overflow = 'hidden';
 }
@@ -173,6 +190,7 @@ function closeDrawer(): void {
   e.drawer.setAttribute('inert', '');
   e.drawer.setAttribute('aria-hidden', 'true');
   e.overlay.classList.add('opacity-0', 'pointer-events-none');
+  setBackgroundInert(false);
   document.body.style.overflow = '';
   lastTrigger?.focus();
 }

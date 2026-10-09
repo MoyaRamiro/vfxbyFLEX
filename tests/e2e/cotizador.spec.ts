@@ -42,3 +42,11 @@ test('editar croma inline desde el drawer actualiza el total', async ({ page }) 
   await page.locator('.drawer-croma-entornos').selectOption('4');
   await expect(page.locator('#cart-total')).toHaveText('USD 65');
 });
+
+test('la página aplica los estilos de Tailwind (no queda sin CSS)', async ({ page }) => {
+  await page.goto('/');
+  const fontSize = await page.locator('h1').evaluate((el) => parseFloat(getComputedStyle(el).fontSize));
+  expect(fontSize).toBeGreaterThan(40);
+  const fontFamily = await page.locator('body').evaluate((el) => getComputedStyle(el).fontFamily);
+  expect(fontFamily).toContain('Space Grotesk');
+});
