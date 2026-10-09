@@ -108,6 +108,8 @@ function openDrawer(): void {
   const e = els();
   lastTrigger = document.activeElement as HTMLElement;
   e.drawer.classList.remove('translate-x-full');
+  e.drawer.removeAttribute('inert');
+  e.drawer.setAttribute('aria-hidden', 'false');
   e.overlay.classList.remove('opacity-0', 'pointer-events-none');
   e.close.focus();
   document.body.style.overflow = 'hidden';
@@ -116,6 +118,8 @@ function openDrawer(): void {
 function closeDrawer(): void {
   const e = els();
   e.drawer.classList.add('translate-x-full');
+  e.drawer.setAttribute('inert', '');
+  e.drawer.setAttribute('aria-hidden', 'true');
   e.overlay.classList.add('opacity-0', 'pointer-events-none');
   document.body.style.overflow = '';
   lastTrigger?.focus();
