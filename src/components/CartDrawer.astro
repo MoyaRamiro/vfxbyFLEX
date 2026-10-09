@@ -1,0 +1,70 @@
+---
+import { SITE } from '../config/site';
+---
+
+<button
+  id="cart-button"
+  type="button"
+  class="fixed bottom-6 right-6 z-50 flex items-center gap-3 bg-ink text-paper px-6 py-4 font-bold border-2 border-ink hover:bg-lime hover:text-ink hover:border-lime transition-colors"
+  aria-haspopup="dialog"
+  aria-controls="cart-drawer"
+>
+  <span id="cart-badge" class="bg-lime text-ink text-sm font-mono px-2 py-0.5">0</span>
+  Ver carrito
+</button>
+
+<div id="cart-overlay" class="fixed inset-0 z-[55] bg-ink/40 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity"></div>
+
+<aside
+  id="cart-drawer"
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="cart-drawer-title"
+  class="fixed top-0 right-0 z-[60] h-full w-full max-w-md bg-paper border-l-2 border-ink flex flex-col translate-x-full"
+>
+  <header class="flex items-center justify-between border-b-2 border-ink p-5">
+    <h2 id="cart-drawer-title" class="text-xl font-bold">Tu pedido</h2>
+    <button id="cart-close" type="button" class="border-2 border-ink w-10 h-10 font-bold hover:bg-ink hover:text-paper transition-colors" aria-label="Cerrar carrito">✕</button>
+  </header>
+
+  <div class="flex-1 overflow-y-auto p-5 flex flex-col gap-4">
+    <ul id="cart-items" class="flex flex-col gap-3"></ul>
+    <p id="cart-empty" class="text-muted text-sm">Todavía no agregaste servicios. Elegí abajo en el configurador.</p>
+
+    <div class="border-t-2 border-ink pt-4 mt-auto">
+      <div class="flex items-center justify-between text-2xl font-bold">
+        <span>TOTAL</span>
+        <span id="cart-total" aria-live="polite" class="font-mono">USD 0</span>
+      </div>
+    </div>
+
+    <label class="flex flex-col gap-1 text-sm font-medium">
+      Nombre *
+      <input id="cart-name" type="text" required autocomplete="name" class="border-2 border-ink px-3 py-2 bg-paper" placeholder="Tu nombre" />
+    </label>
+    <label class="flex flex-col gap-1 text-sm font-medium">
+      Instagram
+      <input id="cart-instagram" type="text" autocomplete="off" class="border-2 border-ink px-3 py-2 bg-paper" placeholder="@tuusuario" />
+    </label>
+    <label class="flex flex-col gap-1 text-sm font-medium">
+      Notas — especificá todo con detalle
+      <textarea id="cart-notes" rows="5" class="border-2 border-ink px-3 py-2 bg-paper" placeholder="Colores, fechas, referencias, todo lo que quieras contarle a Flex..."></textarea>
+    </label>
+
+    <p class="text-xs text-muted border-2 border-dashed border-ink/30 p-3">
+      🎵 La canción (MP3) la mandás por el mismo chat de WhatsApp después de enviar el pedido.
+    </p>
+  </div>
+
+  <footer class="border-t-2 border-ink p-5">
+    <a
+      id="cart-submit"
+      href={SITE.whatsapp ? `https://wa.me/${SITE.whatsapp}` : '#'}
+      target="_blank"
+      rel="noopener noreferrer"
+      class="block w-full bg-lime text-ink text-center font-bold text-lg py-4 border-2 border-lime hover:bg-ink hover:text-paper hover:border-ink transition-colors"
+    >
+      Enviar pedido por WhatsApp →
+    </a>
+  </footer>
+</aside>
