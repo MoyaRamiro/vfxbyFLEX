@@ -1,0 +1,12 @@
+---
+const words = ['VFX', 'VISUALIZERS', 'CROMA', 'MONTAJE', 'REELS', 'PORTADAS', 'GLITCHES', 'ROTO', 'IA 3D'];
+const strip = [...words, ...words];
+---
+
+<div class="border-y-2 border-ink bg-lime overflow-hidden py-3" aria-hidden="true">
+  <div class="animate-marquee flex w-max gap-10 whitespace-nowrap font-bold text-xl">
+    {strip.map((w) => (
+      <span class="flex items-center gap-10">{w}<span class="text-cyan">✦</span></span>
+    ))}
+  </div>
+</div>

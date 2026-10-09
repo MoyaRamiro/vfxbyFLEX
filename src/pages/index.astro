@@ -4,7 +4,8 @@ import Hero from '../components/Hero.astro';
 import Destacados from '../components/Destacados.astro';
 import Configurador from '../components/Configurador.astro';
 import CartDrawer from '../components/CartDrawer.astro';
-import { SITE } from '../config/site';
+import Marquee from '../components/Marquee.astro';
+import Footer from '../components/Footer.astro';
 ---
 
 <Base
@@ -14,12 +15,11 @@ import { SITE } from '../config/site';
   <main>
     <Hero />
     <Destacados />
+    <Marquee />
     <Configurador />
     <CartDrawer />
   </main>
-  <footer id="footer">
-    <a href={SITE.instagramUrl} target="_blank" rel="noopener noreferrer">Instagram</a>
-  </footer>
+  <Footer />
 </Base>
 
 <script>

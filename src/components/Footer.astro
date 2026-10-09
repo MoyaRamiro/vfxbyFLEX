@@ -1,0 +1,42 @@
+---
+import { SITE } from '../config/site';
+---
+
+<footer id="footer" class="border-t-2 border-ink px-6 md:px-10 py-16">
+  <div class="max-w-6xl mx-auto grid gap-10 md:grid-cols-2">
+    <div>
+      <p class="footer-title text-3xl md:text-5xl font-bold">¿Listo para tu VFX?</p>
+      <a
+        href={`https://wa.me/${SITE.whatsapp}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        class="footer-cta mt-6 inline-flex items-center gap-3 bg-ink text-paper px-8 py-4 font-bold border-2 border-ink hover:bg-cyan hover:text-ink hover:border-cyan transition-colors"
+      >
+        Escribir por WhatsApp →
+      </a>
+    </div>
+    <div class="flex flex-col gap-3 md:items-end md:text-right justify-end text-sm">
+      <a href={SITE.instagramUrl} target="_blank" rel="noopener noreferrer" class="hover:text-cyan transition-colors font-medium">Instagram @{SITE.instagram}</a>
+      <a href={`https://wa.me/${SITE.whatsapp}`} target="_blank" rel="noopener noreferrer" class="hover:text-cyan transition-colors font-medium">WhatsApp {SITE.whatsappDisplay}</a>
+      <a href={`mailto:${SITE.email}`} class="hover:text-cyan transition-colors font-medium">{SITE.email}</a>
+      <p class="text-muted font-mono mt-4">© {new Date().getFullYear()} VFXBYFLEX</p>
+    </div>
+  </div>
+</footer>
+
+<script>
+  import gsap from 'gsap';
+  import { ScrollTrigger } from 'gsap/ScrollTrigger';
+  gsap.registerPlugin(ScrollTrigger);
+
+  gsap.matchMedia().add('(prefers-reduced-motion: no-preference)', () => {
+    gsap.from(['.footer-title', '.footer-cta'], {
+      opacity: 0,
+      y: 30,
+      stagger: 0.15,
+      duration: 0.6,
+      ease: 'power3.out',
+      scrollTrigger: { trigger: '#footer', start: 'top 80%' },
+    });
+  });
+</script>
