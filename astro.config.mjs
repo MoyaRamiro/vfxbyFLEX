@@ -2,7 +2,7 @@ import { defineConfig } from 'astro/config';
 import tailwindcss from '@tailwindcss/vite';
 
 export default defineConfig({
-  site: 'https://vfxbyflex.netlify.app',
+  site: 'https://vfxby-flex.vercel.app',
   vite: {
     plugins: [tailwindcss()],
   },

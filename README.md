@@ -14,11 +14,11 @@ Sitio de cotización para el editor de VFX Flex. Astro estático, sin backend: e
 | Qué | Dónde |
 |---|---|
 | Precios y servicios | `src/data/services.ts` |
-| Proyectos destacados (link + miniatura) | `src/data/projects.ts` + archivos en `public/projects/` |
+| Proyectos destacados (link + miniatura) | `src/data/projects.ts` + imágenes en `src/assets/projects/` |
 | WhatsApp, Instagram, email | `src/config/site.ts` |
 
 ## Deploy
 
-Sube a Netlify o Cloudflare Pages apuntando al repo. Build: `npm run build`, publish: `dist`. No necesita variables de entorno.
+Deployado en Vercel (proyecto `vfxby-flex` → `https://vfxby-flex.vercel.app`). Build: `npm run build`, publish: `dist`. No necesita variables de entorno.
 
-Actualizá `site` en `astro.config.mjs` con el dominio real una vez deployado (se usa para canonical y `og:image`).
+`site` en `astro.config.mjs` es la fuente de verdad del dominio: alimenta canonical, `og:image`, `robots.txt` y `sitemap.xml`. Para usar otro dominio, cambiá `site` y volvé a deployar.

@@ -1,6 +1,6 @@
 export const SITE = {
   name: 'VFXBYFLEX',
-  url: 'https://vfxbyflex.netlify.app/',
+  url: 'https://vfxby-flex.vercel.app/',
   title: 'VFXBYFLEX - Servicios de VFX, Visualizers y Montaje',
   description:
     'Cotizá tu VFX, visualizer o montaje con Flex. Elegí los servicios, armá tu pedido y lo enviás directo por WhatsApp.',
