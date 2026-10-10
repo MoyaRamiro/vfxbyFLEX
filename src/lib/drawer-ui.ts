@@ -84,7 +84,7 @@ function renderItems(state: CartState): void {
           ? `
         <div class="drawer-croma flex flex-col gap-2 mt-2" data-key="croma">
           <label class="text-xs font-medium">Entornos
-            <select class="drawer-croma-entornos border-2 border-ink px-2 py-1 bg-paper text-sm">
+            <select name="croma-entornos" aria-label="Entornos del croma" class="drawer-croma-entornos border-2 border-ink px-2 py-1 bg-paper text-sm">
               ${CROMA_ENTORNOS_OPTIONS.map((n) => `<option value="${n}"${n === entornos ? ' selected' : ''}>${n}</option>`).join('')}
             </select>
           </label>
@@ -114,7 +114,7 @@ function renderItems(state: CartState): void {
   if (state.items.length > prevCount && !reduce) {
     e.badge.animate(
       [{ transform: 'scale(1)' }, { transform: 'scale(1.35)' }, { transform: 'scale(1)' }],
-      { duration: 300, easing: 'cubic-bezier(0.34, 1.56, 0.64, 1)' }
+      { duration: 300, easing: 'cubic-bezier(0.22, 1, 0.36, 1)' }
     );
   }
   const sum = state.items.reduce((a, i) => a + i.price, 0);

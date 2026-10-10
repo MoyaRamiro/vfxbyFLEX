@@ -1,30 +1,19 @@
+import type { ImageMetadata } from 'astro';
 import { SITE } from '../config/site';
+import visualizer from '../assets/projects/visualizer.png';
+import vfxPro from '../assets/projects/vfx-pro.png';
+import croma from '../assets/projects/croma.png';
+import montaje from '../assets/projects/montaje.png';
 
 export interface Project {
   title: string;
-  thumbnail: string;
+  thumbnail: ImageMetadata;
   url: string;
 }
 
 export const PROJECTS: Project[] = [
-  {
-    title: 'Visualizer — Próximo ejemplo',
-    thumbnail: '/projects/placeholder-1.svg',
-    url: SITE.instagramUrl,
-  },
-  {
-    title: 'VFX Pro — Próximo ejemplo',
-    thumbnail: '/projects/placeholder-2.svg',
-    url: SITE.instagramUrl,
-  },
-  {
-    title: 'Croma — Próximo ejemplo',
-    thumbnail: '/projects/placeholder-3.svg',
-    url: SITE.instagramUrl,
-  },
-  {
-    title: 'Montaje — Próximo ejemplo',
-    thumbnail: '/projects/placeholder-4.svg',
-    url: SITE.instagramUrl,
-  },
+  { title: 'Visualizer', thumbnail: visualizer, url: SITE.instagramUrl },
+  { title: 'VFX Pro', thumbnail: vfxPro, url: SITE.instagramUrl },
+  { title: 'Croma', thumbnail: croma, url: SITE.instagramUrl },
+  { title: 'Montaje', thumbnail: montaje, url: SITE.instagramUrl },
 ];
