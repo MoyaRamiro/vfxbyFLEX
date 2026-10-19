@@ -1,72 +1,93 @@
 ---
 import { SITE } from '../config/site';
+import { AUDIO_NOTE, WHATSAPP_MODES } from '../config/order';
 ---
 
 <button
-  id="cart-button"
   type="button"
-  class="fixed bottom-6 right-6 z-50 flex items-center gap-3 bg-ink text-paper px-6 py-4 font-bold border-2 border-ink hover:bg-lime hover:text-ink hover:border-lime transition-colors"
-  aria-haspopup="dialog"
-  aria-controls="cart-drawer"
+  class="cart-fab cart-trigger group fixed right-4 sm:right-6 bottom-[max(1rem,env(safe-area-inset-bottom))] z-[75] flex items-center gap-3 border-2 border-ink bg-lime text-ink px-4 sm:px-5 py-3 sm:py-3.5 font-bold shadow-[0_12px_32px_rgba(10,10,10,0.30)] hover:bg-ink hover:text-paper transition-[background-color,color,opacity] duration-200"
+  aria-label="Ver tu pedido"
 >
-  <span id="cart-badge" class="bg-lime text-ink text-sm font-mono px-2 py-0.5">0</span>
-  Ver carrito
+  <span class="relative inline-flex items-center justify-center">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M3 4h2.2l2.3 11.6a1.8 1.8 0 0 0 1.8 1.4h8.3a1.8 1.8 0 0 0 1.8-1.4L21 8H6.2" stroke="currentColor" stroke-width="2" stroke-linecap="square" stroke-linejoin="miter" />
+      <circle cx="10" cy="20.2" r="1.5" fill="currentColor" />
+      <circle cx="17.6" cy="20.2" r="1.5" fill="currentColor" />
+    </svg>
+    <span data-cart-count class="absolute -top-2.5 -right-2.5 min-w-[20px] h-5 px-1 grid place-items-center bg-ink text-lime font-mono text-[11px] leading-none group-hover:bg-lime group-hover:text-ink transition-colors">0</span>
+  </span>
+  <span class="flex flex-col items-start leading-none">
+    <span class="font-mono text-[10px] tracking-[0.18em] opacity-70">VER PEDIDO</span>
+    <span data-cart-total class="font-mono text-sm mt-1 tabular-nums">USD 0</span>
+  </span>
 </button>
 
-<div id="cart-overlay" class="fixed inset-0 z-[55] bg-ink/40 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity"></div>
+<div id="cart-backdrop" class="fixed inset-0 z-[80] bg-ink/50 transition-opacity opacity-0 pointer-events-none"></div>
 
-<aside
-  id="cart-drawer"
-  role="dialog"
-  aria-modal="true"
-  aria-labelledby="cart-drawer-title"
-  inert
-  aria-hidden="true"
-  class="fixed top-0 right-0 z-[60] h-full w-full max-w-md bg-paper border-l-2 border-ink flex flex-col translate-x-full"
->
-  <header class="flex items-center justify-between border-b-2 border-ink p-5">
-    <h2 id="cart-drawer-title" class="text-xl font-bold">Tu pedido</h2>
-    <button id="cart-close" type="button" class="border-2 border-ink w-11 h-11 font-bold hover:bg-ink hover:text-paper transition-colors" aria-label="Cerrar carrito">✕</button>
+<aside id="cart-drawer" class="fixed inset-y-0 right-0 z-[90] w-full sm:w-[420px] border-l-2 border-ink bg-paper flex flex-col transition-transform duration-300 translate-x-full pointer-events-none" aria-hidden="true" aria-label="Carrito">
+  <header class="flex items-center justify-between gap-4 border-b-2 border-ink p-5">
+    <div>
+      <p class="font-mono text-xs text-muted">CARRITO</p>
+      <p class="font-bold text-lg">Tu pedido <span data-cart-count class="font-mono">0</span></p>
+    </div>
+    <button id="cart-close" class="border-2 border-ink w-10 h-10 font-bold hover:bg-ink hover:text-paper transition-colors" aria-label="Cerrar carrito">✕</button>
   </header>
 
-  <div class="flex-1 overflow-y-auto p-5 flex flex-col gap-4">
-    <ul id="cart-items" class="flex flex-col gap-3"></ul>
-    <p id="cart-empty" class="text-muted text-sm">Todavía no agregaste servicios. Elegí abajo en el configurador.</p>
+  <div class="flex-1 overflow-y-auto p-5 flex flex-col gap-6">
+    <div id="cart-items" class="flex flex-col gap-4"></div>
 
-    <div class="border-t-2 border-ink pt-4 mt-auto">
-      <div class="flex items-center justify-between text-2xl font-bold">
+    <div class="border-2 border-ink/20 p-5 flex flex-col gap-3">
+      <div class="flex items-center justify-between text-sm">
+        <span>Subtotal</span>
+        <span id="cart-subtotal" class="font-mono">USD 0</span>
+      </div>
+      <div id="cart-duration-row" class="flex items-center justify-between text-sm hidden">
+        <span>Duración <span id="cart-duration-label" class="text-muted"></span></span>
+        <span id="cart-duration" class="font-mono">USD 0</span>
+      </div>
+      <div class="flex items-center justify-between text-sm">
+        <span>Ahorro</span>
+        <span id="cart-discount" class="font-mono text-green-700">—</span>
+      </div>
+      <div class="flex items-center justify-between font-bold text-lg border-t-2 border-ink/20 pt-3">
         <span>TOTAL</span>
-        <span id="cart-total" aria-live="polite" class="font-mono">USD 0</span>
+        <span id="cart-total" class="font-mono">USD 0</span>
       </div>
     </div>
 
-    <label class="flex flex-col gap-1 text-sm font-medium">
-      Nombre *
-      <input id="cart-name" type="text" required autocomplete="name" class="border-2 border-ink px-3 py-2 bg-paper" placeholder="Tu nombre" />
-    </label>
-    <label class="flex flex-col gap-1 text-sm font-medium">
-      Instagram
-      <input id="cart-instagram" type="text" autocomplete="off" class="border-2 border-ink px-3 py-2 bg-paper" placeholder="@tuusuario" />
-    </label>
-    <label class="flex flex-col gap-1 text-sm font-medium">
-      Notas — especificá todo con detalle
-      <textarea id="cart-notes" rows="5" class="border-2 border-ink px-3 py-2 bg-paper" placeholder="Colores, fechas, referencias, todo lo que quieras contarle a Flex..."></textarea>
-    </label>
-
-    <p class="text-xs text-muted border-2 border-dashed border-ink/30 p-3">
-      🎵 La canción (MP3) la mandás por el mismo chat de WhatsApp después de enviar el pedido.
-    </p>
+    <div class="flex flex-col gap-4">
+      <div>
+        <label class="block font-mono text-xs text-muted mb-2">INSTAGRAM (opcional)</label>
+        <input id="customer-ig" type="text" class="w-full border-2 border-ink px-3 py-2" placeholder="@usuario" />
+      </div>
+      <div>
+        <label class="block font-mono text-xs text-muted mb-2">NOTAS</label>
+        <textarea id="customer-notes" class="w-full border-2 border-ink px-3 py-2 min-h-[90px]" placeholder="Detalles, referencia, tono deseado..."></textarea>
+      </div>
+      <div>
+        <span class="block font-mono text-xs text-muted mb-2">MODO DE WHATSAPP</span>
+        <div class="flex flex-col gap-2">
+          {Object.values(WHATSAPP_MODES).map((m) => (
+            <label class="flex items-start gap-2 text-sm">
+              <input type="radio" class="mode-radio mt-1" name="mode" value={m.id} />
+              <span>
+                <strong>{m.label}</strong>
+                <span class="block text-xs text-muted">{m.intro}</span>
+              </span>
+            </label>
+          ))}
+        </div>
+      </div>
+      <div class="border-2 border-ink bg-lime/20 px-4 py-3">
+        <p class="font-bold text-sm">Reserva con seña</p>
+        <p class="text-xs text-muted mt-1">El monto de la seña se confirma por WhatsApp.</p>
+      </div>
+      <p class="text-xs text-muted">{AUDIO_NOTE}</p>
+    </div>
   </div>
 
-  <footer class="border-t-2 border-ink p-5">
-    <a
-      id="cart-submit"
-      href={SITE.whatsapp ? `https://wa.me/${SITE.whatsapp}` : '#'}
-      target="_blank"
-      rel="noopener noreferrer"
-      class="block w-full bg-lime text-ink text-center font-bold text-lg py-4 border-2 border-lime hover:bg-ink hover:text-paper hover:border-ink transition-colors"
-    >
-      Enviar pedido por WhatsApp →
-    </a>
+  <footer class="flex flex-col gap-3 border-t-2 border-ink p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
+    <button id="cart-wa" class="border-2 border-ink bg-lime px-5 py-3 font-bold text-center hover:bg-ink hover:text-paper transition-colors">Enviar pedido por WhatsApp</button>
+    <button id="cart-clear" class="border-2 border-ink/30 px-4 py-2.5 font-mono text-xs hover:bg-ink hover:text-paper transition-colors">Limpiar carrito</button>
   </footer>
 </aside>

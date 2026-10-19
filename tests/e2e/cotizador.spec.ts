@@ -1,52 +1,67 @@
-import { expect, test } from '@playwright/test';
+import { test, expect } from '@playwright/test';
 
-test('agregar un servicio y enviar por WhatsApp', async ({ page }) => {
+test('configurator smoke', async ({ page }) => {
   await page.goto('/');
-  await page.locator('.service-option[data-option="visualizer-full"]').click();
-  await page.locator('#cart-button').click();
-  await expect(page.locator('#cart-total')).toHaveText('USD 30');
-  await page.locator('#cart-name').fill('Juan');
-  const href = await page.locator('#cart-submit').getAttribute('href');
-  expect(href).toContain('https://wa.me/5493794270276?text=');
-  const decoded = decodeURIComponent(href!.split('text=')[1]);
-  expect(decoded).toContain('Visualizer Full');
-  expect(decoded).toContain('TOTAL: USD 30');
-  expect(decoded).toContain('Nombre: Juan');
-  expect(decoded).toContain('enviá el MP3');
+  await expect(page.getByRole('heading', { level: 1 }).first()).toBeVisible();
 });
 
-test('2 Reels excluye 1 Reel', async ({ page }) => {
+test('promo banner stays visible with a live countdown', async ({ page }) => {
   await page.goto('/');
-  await page.locator('.service-option[data-option="reel-1"]').click();
-  await page.locator('.service-option[data-option="reel-2"]').click();
-  await page.locator('#cart-button').click();
-  const items = page.locator('#cart-items li');
-  await expect(items).toHaveCount(1);
-  await expect(items.first()).toContainText('2 Reels');
+  const banner = page.locator('#promo-banner');
+  await expect(banner).toBeVisible();
+  await expect(page.locator('#promo-countdown')).toHaveText(/^\d{2}:\d{2}:\d{2}$/);
 });
 
-test('precio del paquete visible antes y después de agregar', async ({ page }) => {
+test('selecting a service updates the cart total', async ({ page }) => {
   await page.goto('/');
-  const pkg = page.locator('.package-toggle[data-service="vfx-pro"]');
-  await expect(pkg).toContainText('USD 45');
-  await pkg.click();
-  await expect(pkg).toContainText('Agregado ✓');
-  await expect(pkg).toContainText('USD 45');
+  await page.locator('.option-btn[data-option="visual-only-lyrics"]').click();
+  await page.locator('.cart-trigger').first().click();
+  await expect(page.locator('#cart-total')).toContainText('57');
 });
 
-test('editar croma inline desde el drawer actualiza el total', async ({ page }) => {
+test('promo item shows discounted price and original struck through', async ({ page }) => {
   await page.goto('/');
-  await page.locator('.croma-add').click();
-  await page.locator('#cart-button').click();
-  await expect(page.locator('#cart-total')).toHaveText('USD 35');
-  await page.locator('.drawer-croma-entornos').selectOption('4');
-  await expect(page.locator('#cart-total')).toHaveText('USD 65');
+  await page.locator('.option-btn[data-option="visual-25d-imagen"]').click();
+  await page.locator('.cart-trigger').first().click();
+  // Discounted base price is charged
+  await expect(page.locator('#cart-total')).toContainText('45');
+  // Original is inflated (~USD 64) and savings shown
+  await expect(page.locator('#cart-subtotal')).toContainText('64');
+  await expect(page.locator('#cart-discount')).toContainText('19');
 });
 
-test('la página aplica los estilos de Tailwind (no queda sin CSS)', async ({ page }) => {
+test('removing items clears selection and does not re-add siblings', async ({ page }) => {
   await page.goto('/');
-  const fontSize = await page.locator('h1').evaluate((el) => parseFloat(getComputedStyle(el).fontSize));
-  expect(fontSize).toBeGreaterThan(40);
-  const fontFamily = await page.locator('body').evaluate((el) => getComputedStyle(el).fontFamily);
-  expect(fontFamily).toContain('Space Grotesk');
+  await page.locator('.cat-tab[data-category="vfx"]').click();
+
+  const pkg = page.locator('.option-btn[data-option="vfx-full"]');
+  const cam = page.locator('.option-btn[data-option="vfx-full-camaras"]');
+  const tit = page.locator('.option-btn[data-option="vfx-full-titulo"]');
+
+  await pkg.click(); // reveals the complementos group
+  await cam.click();
+  await tit.click();
+  await expect(cam).toHaveAttribute('aria-pressed', 'true');
+  await expect(tit).toHaveAttribute('aria-pressed', 'true');
+
+  await page.locator('.cart-trigger').first().click();
+  await page.locator('.remove-line[data-key="vfx:vfx-full-camaras"]').click();
+  await page.locator('.remove-line[data-key="vfx:vfx-full-titulo"]').click();
+  await page.locator('#cart-close').click();
+
+  // Regression: selection must clear after removal (used to stay black/stale)
+  await expect(cam).toHaveAttribute('aria-pressed', 'false');
+  await expect(tit).toHaveAttribute('aria-pressed', 'false');
+  await expect(pkg).toHaveAttribute('aria-checked', 'true');
+
+  // Re-selecting one must not drag its sibling back into the cart
+  await cam.click();
+  await expect(cam).toHaveAttribute('aria-pressed', 'true');
+  await expect(tit).toHaveAttribute('aria-pressed', 'false');
+  await expect(page.locator('[data-cart-count]').first()).toHaveText('2');
+
+  await page.locator('.cart-trigger').first().click();
+  const rows = page.locator('.remove-line');
+  await expect(rows).toHaveCount(2); // package + camaras only
+  await expect(page.locator('#cart-total')).toContainText('214');
 });

@@ -1,60 +1,132 @@
-import { cromaPrice } from '../data/services';
+import type { CategoryId } from '../data/catalog';
+import { DURATION, type WhatsAppMode } from '../config/order';
 
-export const CART_EVENT = 'cart:change';
+export const CART_EVENT = 'vfxbyflex:cart';
 const STORAGE_KEY = 'vfxbyflex-cart';
-const EXCLUSIVE_PAIRS = [
-  ['reel-1', 'reel-2'],
-];
 
-export interface CartItem {
-  key: string;
-  serviceId: string;
+export interface CartAddon {
+  id: string;
   label: string;
   price: number;
-  meta?: Record<string, string | number>;
+}
+
+export interface CartLine {
+  key: string;
+  categoryId: CategoryId;
+  groupId: string;
+  optionId: string;
+  label: string;
+  base: number;
+  promo: boolean;
+  entornos?: number;
+  entornoPriceEach?: number;
+  addons?: CartAddon[];
 }
 
 export interface CustomerInfo {
-  name: string;
   instagram: string;
   notes: string;
 }
 
 export interface CartState {
-  items: CartItem[];
+  lines: CartLine[];
   customer: CustomerInfo;
-}
-
-export function itemKeyFor(id: string): string {
-  return id;
+  durationSec: number;
+  mood: string | null;
+  sena: boolean;
+  mode: WhatsAppMode;
 }
 
 export function emptyCart(): CartState {
-  return { items: [], customer: { name: '', instagram: '', notes: '' } };
+  return {
+    lines: [],
+    customer: { instagram: '', notes: '' },
+    durationSec: DURATION.baseSec,
+    mood: null,
+    sena: true,
+    mode: 'chat',
+  };
 }
 
-function isExclusive(a: string, b: string): boolean {
-  return EXCLUSIVE_PAIRS.some((pair) => pair.includes(a) && pair.includes(b));
+export function lineKey(categoryId: CategoryId, groupId: string, optionId: string, kind: 'single' | 'multi'): string {
+  return kind === 'single' ? `${categoryId}:${groupId}` : `${categoryId}:${optionId}`;
 }
 
-export function addItem(state: CartState, item: CartItem): CartState {
-  const items = state.items
-    .filter((i) => i.key !== item.key)
-    .filter((i) => !(i.serviceId === item.serviceId && item.serviceId !== 'extras'))
-    .filter((i) => !(i.serviceId === 'extras' && isExclusive(i.key, item.key)));
-  return { ...state, items: [...items, item] };
+export function toggleLine(state: CartState, line: CartLine, single: boolean): CartState {
+  const inGroup = state.lines.filter((l) => l.categoryId === line.categoryId && l.groupId === line.groupId);
+  const existing = inGroup.find((l) => l.optionId === line.optionId);
+  if (single) {
+    const rest = state.lines.filter((l) => !(l.categoryId === line.categoryId && l.groupId === line.groupId));
+    return { ...state, lines: existing ? rest : [...rest, line] };
+  }
+  const rest = state.lines.filter((l) => l.key !== line.key);
+  return { ...state, lines: existing ? rest : [...rest, line] };
 }
 
-export function removeItem(state: CartState, key: string): CartState {
-  return { ...state, items: state.items.filter((i) => i.key !== key) };
+export interface LineRef {
+  categoryId: CategoryId;
+  groupId: string;
+  optionId: string;
+}
+
+export function isSelected(state: CartState, ref: LineRef): boolean {
+  return state.lines.some(
+    (l) => l.categoryId === ref.categoryId && l.groupId === ref.groupId && l.optionId === ref.optionId
+  );
+}
+
+export function selectedOptionInGroup(state: CartState, categoryId: CategoryId, groupId: string): string | null {
+  return state.lines.find((l) => l.categoryId === categoryId && l.groupId === groupId)?.optionId ?? null;
+}
+
+export function removeLine(state: CartState, key: string): CartState {
+  return { ...state, lines: state.lines.filter((l) => l.key !== key) };
+}
+
+export function setEntornos(state: CartState, key: string, entornos: number, entornoPriceEach?: number): CartState {
+  return {
+    ...state,
+    lines: state.lines.map((l) =>
+      l.key === key ? { ...l, entornos, entornoPriceEach: entornoPriceEach ?? l.entornoPriceEach } : l
+    ),
+  };
+}
+
+export function addonSelected(state: CartState, key: string, addonId: string): boolean {
+  return state.lines.some((l) => l.key === key && (l.addons ?? []).some((a) => a.id === addonId));
+}
+
+export function toggleAddon(state: CartState, key: string, addon: CartAddon): CartState {
+  return {
+    ...state,
+    lines: state.lines.map((l) => {
+      if (l.key !== key) return l;
+      const addons = l.addons ?? [];
+      const has = addons.some((a) => a.id === addon.id);
+      return { ...l, addons: has ? addons.filter((a) => a.id !== addon.id) : [...addons, addon] };
+    }),
+  };
+}
+
+export function setDuration(state: CartState, durationSec: number): CartState {
+  const clamped = Math.min(DURATION.maxSec, Math.max(DURATION.minSec, durationSec));
+  return { ...state, durationSec: clamped };
+}
+
+export function setMood(state: CartState, mood: string | null): CartState {
+  return { ...state, mood: state.mood === mood ? null : mood };
+}
+
+export function setSena(state: CartState, sena: boolean): CartState {
+  return { ...state, sena };
+}
+
+export function setMode(state: CartState, mode: WhatsAppMode): CartState {
+  return { ...state, mode };
 }
 
 export function updateCustomer(state: CartState, patch: Partial<CustomerInfo>): CartState {
   return { ...state, customer: { ...state.customer, ...patch } };
-}
-
-export function total(state: CartState): number {
-  return state.items.reduce((sum, i) => sum + i.price, 0);
 }
 
 export function saveCart(state: CartState): void {
@@ -62,33 +134,40 @@ export function saveCart(state: CartState): void {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
 }
 
+function isLine(value: unknown): value is CartLine {
+  if (typeof value !== 'object' || value === null) return false;
+  const l = value as Record<string, unknown>;
+  return typeof l.key === 'string' && typeof l.categoryId === 'string' && typeof l.base === 'number';
+}
+
 export function loadCart(): CartState {
-  if (typeof localStorage === 'undefined') return emptyCart();
+  const base = emptyCart();
+  if (typeof localStorage === 'undefined') return base;
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return emptyCart();
-    const parsed = JSON.parse(raw) as CartState;
-    if (!Array.isArray(parsed.items) || typeof parsed.customer !== 'object' || parsed.customer === null) {
-      return emptyCart();
+    if (!raw) return base;
+    const parsed = JSON.parse(raw) as Partial<CartState>;
+    if (!Array.isArray(parsed.lines) || typeof parsed.customer !== 'object' || parsed.customer === null) {
+      return base;
     }
-    return parsed;
+    const duration = typeof parsed.durationSec === 'number' ? parsed.durationSec : base.durationSec;
+    return {
+      lines: parsed.lines.filter(isLine),
+      customer: {
+        instagram: typeof parsed.customer.instagram === 'string' ? parsed.customer.instagram : '',
+        notes: typeof parsed.customer.notes === 'string' ? parsed.customer.notes : '',
+      },
+      durationSec: Math.min(DURATION.maxSec, Math.max(DURATION.minSec, duration)),
+      mood: typeof parsed.mood === 'string' ? parsed.mood : null,
+      sena: parsed.sena === true,
+      mode: parsed.mode === 'receipt' ? 'receipt' : 'chat',
+    };
   } catch {
-    return emptyCart();
+    return base;
   }
 }
 
 export function dispatchCartChange(state: CartState): void {
+  if (typeof window === 'undefined') return;
   window.dispatchEvent(new CustomEvent<CartState>(CART_EVENT, { detail: state }));
 }
-
-export function buildCromaItem(entornos: number, nivel: 'pro' | 'full'): CartItem {
-  return {
-    key: itemKeyFor('croma'),
-    serviceId: 'croma',
-    label: `Croma (${entornos} entornos, VFX ${nivel === 'pro' ? 'Pro' : 'Full'})`,
-    price: cromaPrice(entornos, nivel),
-    meta: { entornos, nivel },
-  };
-}
-
-

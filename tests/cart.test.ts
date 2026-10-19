@@ -1,166 +1,51 @@
-﻿import { beforeEach, describe, expect, it } from 'vitest';
-import {
-  addItem,
-  CART_EVENT,
-  buildCromaItem,
-  dispatchCartChange,
-  emptyCart,
-  itemKeyFor,
-  loadCart,
-  removeItem,
-  saveCart,
-  total,
-  updateCustomer,
-  type CartItem,
-  type CartState,
-} from '../src/lib/cart';
-
-const visualizer: CartItem = {
-  key: itemKeyFor('visualizer'),
-  serviceId: 'visualizer',
-  label: 'Visualizer Full',
-  price: 30,
-};
-const reel1: CartItem = {
-  key: itemKeyFor('reel-1'),
-  serviceId: 'extras',
-  label: '1 Reel',
-  price: 10,
-};
-const reel2: CartItem = {
-  key: itemKeyFor('reel-2'),
-  serviceId: 'extras',
-  label: '2 Reels',
-  price: 17,
-};
-const portada: CartItem = {
-  key: itemKeyFor('portada'),
-  serviceId: 'extras',
-  label: '1 Portada',
-  price: 8,
-};
-const croma2pro: CartItem = {
-  key: itemKeyFor('croma'),
-  serviceId: 'croma',
-  label: 'Croma (2 entornos, VFX Pro)',
-  price: 35,
-  meta: { entornos: 2, nivel: 'pro' },
-};
-
-function fakeLocalStorage() {
-  const store = new Map<string, string>();
-  return {
-    getItem: (k: string) => store.get(k) ?? null,
-    setItem: (k: string, v: string) => void store.set(k, v),
-    removeItem: (k: string) => void store.delete(k),
-  };
-}
+import { describe, it, expect, beforeEach } from 'vitest';
+import { emptyCart, toggleLine, lineKey, setDuration, setSena, setMode, setMood } from '../src/lib/cart';
+import { cartTotals, durationAdjustment, lineTotal, formatDuration, promoOriginal } from '../src/lib/pricing';
+import { promoActive, promoRemaining, formatCountdown } from '../src/lib/promo';
 
 describe('cart', () => {
-  beforeEach(() => {
-    (globalThis as { localStorage?: unknown }).localStorage = fakeLocalStorage();
+  beforeEach(() => {});
+
+  it('toggle single replaces in group', () => {
+    let c = emptyCart();
+    const lineA = { key: 'visual:v1', categoryId: 'visual' as any, groupId: 'v1g', optionId: 'a', label: 'A', base: 50, promo: false };
+    const lineB = { key: 'visual:v1', categoryId: 'visual' as any, groupId: 'v1g', optionId: 'b', label: 'B', base: 60, promo: false };
+    c = toggleLine(c, lineA, true);
+    expect(c.lines.length).toBe(1);
+    c = toggleLine(c, lineB, true);
+    expect(c.lines.length).toBe(1);
+    expect(c.lines[0].optionId).toBe('b');
   });
 
-  it('single-select services replace the previous choice', () => {
-    let state = emptyCart();
-    state = addItem(state, visualizer);
-    state = addItem(state, { ...visualizer, label: 'Lettering / Lyrics', price: 15 });
-    expect(state.items).toHaveLength(1);
-    expect(state.items[0].label).toBe('Lettering / Lyrics');
+  it('toggle multi adds/removes', () => {
+    let c = emptyCart();
+    const lineA = { key: 'vfx:trans', categoryId: 'vfx' as any, groupId: 'c', optionId: 'trans', label: 'Trans', base: 45, promo: false };
+    const lineB = { key: 'vfx:cam', categoryId: 'vfx' as any, groupId: 'c', optionId: 'cam', label: 'Cam', base: 45, promo: false };
+    c = toggleLine(c, lineA, false);
+    c = toggleLine(c, lineB, false);
+    expect(c.lines.length).toBe(2);
+    c = toggleLine(c, lineA, false);
+    expect(c.lines.length).toBe(1);
   });
 
-  it('croma replaces itself and keeps meta', () => {
-    let state = addItem(emptyCart(), croma2pro);
-    state = addItem(state, {
-      key: itemKeyFor('croma'),
-      serviceId: 'croma',
-      label: 'Croma (3 entornos, VFX Full)',
-      price: 75,
-      meta: { entornos: 3, nivel: 'full' },
-    });
-    expect(state.items).toHaveLength(1);
-    expect(state.items[0].price).toBe(75);
+  it('duration adjustment ±10 per 30s from 2:00', () => {
+    expect(durationAdjustment(120)).toBe(0);
+    expect(durationAdjustment(150)).toBe(10);
+    expect(durationAdjustment(180)).toBe(20);
+    expect(durationAdjustment(90)).toBe(-10);
+    expect(durationAdjustment(60)).toBe(-20);
   });
 
-  it('reel-1 and reel-2 are mutually exclusive; portada coexists', () => {
-    let state = addItem(emptyCart(), reel1);
-    state = addItem(state, reel2);
-    expect(state.items.map((i) => i.key)).toEqual([reel2.key]);
-    state = addItem(state, portada);
-    expect(state.items).toHaveLength(2);
+  it('promoUnit 30%', () => {
+    expect(promoOriginal(45)).toBe(64);
+    expect(promoOriginal(119)).toBe(170);
   });
 
-  it('packages accumulate additively', () => {
-    let state = addItem(emptyCart(), {
-      key: itemKeyFor('vfx-basico'),
-      serviceId: 'vfx-basico',
-      label: 'VFX B\u00e1sico',
-      price: 20,
-    });
-    state = addItem(state, {
-      key: itemKeyFor('montaje'),
-      serviceId: 'montaje',
-      label: 'Montaje',
-      price: 15,
-    });
-    expect(state.items).toHaveLength(2);
-    expect(total(state)).toBe(35);
-  });
-
-  it('removeItem deletes by key', () => {
-    let state = addItem(addItem(emptyCart(), reel1), portada);
-    state = removeItem(state, reel1.key);
-    expect(state.items.map((i) => i.key)).toEqual([portada.key]);
-  });
-
-  it('updateCustomer patches customer fields only', () => {
-    let state = updateCustomer(emptyCart(), { name: 'Juan', notes: 'todo oscuro' });
-    expect(state.customer).toEqual({ name: 'Juan', instagram: '', notes: 'todo oscuro' });
-  });
-
-  it('save/load roundtrips through localStorage', () => {
-    let state = addItem(emptyCart(), visualizer);
-    state = updateCustomer(state, { name: 'Ana' });
-    saveCart(state);
-    expect(loadCart()).toEqual(state);
-  });
-
-  it('loadCart returns empty cart on corrupt data', () => {
-    (globalThis as { localStorage: ReturnType<typeof fakeLocalStorage> }).localStorage.setItem(
-      'vfxbyflex-cart',
-      '{broken'
-    );
-    expect(loadCart()).toEqual(emptyCart());
-  });
-
-  it('dispatchCartChange emits cart:change with the state', () => {
-    const seen: CartState[] = [];
-    (globalThis as { window?: unknown }).window = new EventTarget();
-    window.addEventListener(CART_EVENT, ((e: CustomEvent<CartState>) => {
-      seen.push(e.detail);
-    }) as EventListener);
-    const state = addItem(emptyCart(), visualizer);
-    dispatchCartChange(state);
-    expect(seen).toEqual([state]);
-  });
-});
-
-
-
-
-
-
-
-describe('buildCromaItem', () => {
-  it('builds the default croma item', () => {
-    const item = buildCromaItem(2, 'pro');
-    expect(item.label).toBe('Croma (2 entornos, VFX Pro)');
-    expect(item.price).toBe(35);
-    expect(item.meta).toEqual({ entornos: 2, nivel: 'pro' });
-  });
-  it('prices VFX Full with extra environments', () => {
-    const item = buildCromaItem(3, 'full');
-    expect(item.label).toBe('Croma (3 entornos, VFX Full)');
-    expect(item.price).toBe(75);
+  it('promo stays active forever (permanent) with an evergreen countdown', () => {
+    expect(promoActive(new Date('2020-01-01T00:00:00'))).toBe(true);
+    expect(promoActive(new Date('2030-01-01T00:00:00'))).toBe(true);
+    const remaining = promoRemaining(new Date('2020-01-01T12:00:00'));
+    expect(remaining).toBeGreaterThan(0);
+    expect(remaining).toBeLessThanOrEqual(24 * 60 * 60 * 1000);
   });
 });

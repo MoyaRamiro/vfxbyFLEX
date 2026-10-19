@@ -1,170 +1,218 @@
 import {
-  addItem,
-  buildCromaItem,
-  dispatchCartChange,
-  itemKeyFor,
-  loadCart,
-  removeItem,
-  saveCart,
+  CART_EVENT,
   type CartState,
+  type CartLine,
+  loadCart,
+  saveCart,
+  toggleLine,
+  setDuration,
+  setMood,
+  setSena,
+  setEntornos,
+  isSelected,
+  lineKey,
 } from './cart';
+import { getGroup, type CategoryId } from '../data/catalog';
+import { durationAdjustment, formatDuration, money, promoOriginal } from './pricing';
+import { promoActive } from './promo';
+import { buildMessage, buildWhatsAppUrl } from './whatsapp';
+import { SITE } from '../config/site';
 
-function current(): CartState {
-  return loadCart();
+function emit(state: CartState) {
+  if (typeof window === 'undefined') return;
+  window.dispatchEvent(new CustomEvent<CartState>(CART_EVENT, { detail: state }));
 }
 
-function commit(state: CartState): void {
+function setSelected(btn: HTMLButtonElement, selected: boolean, single: boolean) {
+  if (single) btn.setAttribute('aria-checked', selected ? 'true' : 'false');
+  else btn.setAttribute('aria-pressed', selected ? 'true' : 'false');
+  btn.classList.toggle('bg-ink', selected);
+  btn.classList.toggle('text-paper', selected);
+  btn.classList.toggle('border-ink', selected);
+}
+
+function applyOptionPrices(active: boolean) {
+  document.querySelectorAll<HTMLElement>('.option-now').forEach((el) => {
+    const base = Number(el.dataset.price || 0);
+    const promo = el.dataset.promo === '1';
+    const shown = promo && !active ? promoOriginal(base) : base;
+    el.textContent = `USD ${money(shown)}`;
+  });
+  document.querySelectorAll<HTMLElement>('.option-old').forEach((el) => {
+    const row = el.closest('.option-btn') as HTMLElement | null;
+    const promoEl = row?.querySelector<HTMLElement>('.option-now');
+    const promo = promoEl?.dataset.promo === '1';
+    const base = Number(promoEl?.dataset.price || 0);
+    el.textContent = `USD ${money(promoOriginal(base))}`;
+    el.style.display = promo && active ? '' : 'none';
+  });
+}
+
+export function renderConfigurator(state: CartState) {
+  const active = promoActive();
+
+  document.querySelectorAll<HTMLElement>('.group').forEach((g) => {
+    const when = g.dataset.showWhen;
+    if (!when) return;
+    const catId = g.closest<HTMLElement>('.cat-panel')?.dataset.panel as CategoryId | undefined;
+    if (!catId) return;
+    const shown = state.lines.some((l) => l.categoryId === catId && l.optionId === when);
+    g.hidden = !shown;
+  });
+
+  document.querySelectorAll<HTMLButtonElement>('.option-btn').forEach((btn) => {
+    const catId = btn.dataset.category as CategoryId | undefined;
+    const groupId = btn.dataset.group || '';
+    const optionId = btn.dataset.option || '';
+    const single = btn.dataset.single === '1';
+    if (!catId) return;
+    setSelected(btn, isSelected(state, { categoryId: catId, groupId, optionId }), single);
+  });
+
+  const dur = document.getElementById('duration-slider') as HTMLInputElement | null;
+  const val = document.getElementById('duration-value') as HTMLOutputElement | null;
+  const adj = document.getElementById('duration-adjust') as HTMLElement | null;
+  if (dur) dur.value = String(state.durationSec);
+  if (val) val.textContent = formatDuration(state.durationSec);
+  if (adj) {
+    const a = durationAdjustment(state.durationSec);
+    adj.textContent = a === 0 ? 'USD +0' : a > 0 ? `USD +${money(a)}` : `USD ${money(a)}`;
+  }
+
+  document.querySelectorAll<HTMLButtonElement>('.mood-btn').forEach((b) => {
+    const sel = b.dataset.mood === state.mood;
+    b.setAttribute('aria-checked', sel ? 'true' : 'false');
+    b.classList.toggle('bg-ink', sel);
+    b.classList.toggle('text-paper', sel);
+    b.classList.toggle('border-ink', sel);
+  });
+
+  const senaEl = document.getElementById('sena-toggle') as HTMLInputElement | null;
+  if (senaEl) senaEl.checked = state.sena;
+
+  document.querySelectorAll<HTMLElement>('.cat-panel').forEach((panel) => {
+    const catId = panel.dataset.panel as CategoryId | undefined;
+    const select = panel.querySelector<HTMLSelectElement>('.entornos-select');
+    if (!catId || !select) return;
+    const line = state.lines.find((l) => l.categoryId === catId);
+    select.value = String(line?.entornos ?? Number(select.dataset.default || select.value));
+  });
+
+  applyOptionPrices(active);
+
+  const wa = document.getElementById('wa-cta') as HTMLAnchorElement | null;
+  if (wa) wa.href = buildWhatsAppUrl(SITE.whatsapp, buildMessage(state, active));
+}
+
+export function initConfigurator() {
+  let state = loadCart();
+  renderConfigurator(state);
   saveCart(state);
-  dispatchCartChange(state);
-}
+  emit(state);
 
-function syncUI(state: CartState): void {
-  document.querySelectorAll<HTMLElement>('.service-option[data-service]').forEach((btn) => {
-    const service = btn.dataset.service!;
-    const option = btn.dataset.option!;
-    const inCart =
-      service === 'extras'
-        ? state.items.some((i) => i.key === option)
-        : state.items.some((i) => i.key === itemKeyFor(service) && i.label === btn.dataset.label);
-    btn.classList.toggle('border-ink', inCart);
-    btn.classList.toggle('border-ink/20', !inCart);
-    if (btn.hasAttribute('aria-pressed')) btn.setAttribute('aria-pressed', String(inCart));
-    if (btn.getAttribute('role') === 'radio') btn.setAttribute('aria-checked', String(inCart));
+  window.addEventListener(CART_EVENT, (e) => {
+    state = (e as CustomEvent<CartState>).detail;
+    renderConfigurator(state);
   });
 
-  document.querySelectorAll<HTMLElement>('.package-toggle').forEach((btn) => {
-    const key = itemKeyFor(btn.dataset.service!);
-    const active = state.items.some((i) => i.key === key);
-    btn.setAttribute('aria-pressed', String(active));
-    const labelEl = btn.querySelector<HTMLElement>('.package-toggle-label');
-    if (labelEl) labelEl.textContent = active ? 'Agregado ✓' : 'Agregar';
-    btn.classList.toggle('bg-ink', active);
-    btn.classList.toggle('text-paper', active);
-  });
-
-  const cromaItem = state.items.find((i) => i.key === 'croma' || i.serviceId === 'croma');
-  if (cromaItem) {
-    const wrap = document.querySelector<HTMLElement>('[data-croma]');
-    if (wrap) {
-      const meta = (cromaItem.meta ?? {}) as { entornos?: number; nivel?: 'pro' | 'full' };
-      const entornos = meta.entornos ?? 2;
-      const nivel = meta.nivel ?? 'pro';
-      const select = wrap.querySelector<HTMLSelectElement>('.croma-entornos');
-      if (select) select.value = String(entornos);
-      wrap.querySelectorAll<HTMLElement>('.croma-nivel').forEach((b) => {
-        const active = b.dataset.nivel === nivel;
-        b.setAttribute('aria-checked', String(active));
-        b.classList.toggle('border-ink', active);
-        b.classList.toggle('border-ink/20', !active);
-      });
-    }
-  }
-
-  updateCromaPriceLabel();
-}
-
-function updateCromaPriceLabel(): void {
-  const wrap = document.querySelector<HTMLElement>('[data-croma]');
-  if (!wrap) return;
-  const entornos = Number(wrap.querySelector<HTMLSelectElement>('.croma-entornos')!.value);
-  const nivel = wrap.querySelector<HTMLButtonElement>('.croma-nivel[aria-checked="true"]')!.dataset.nivel as 'pro' | 'full';
-  const item = buildCromaItem(entornos, nivel);
-  const priceEl = wrap.querySelector<HTMLElement>('.croma-price')!;
-  priceEl.textContent = `USD ${item.price}`;
-}
-
-function flyChip(from: HTMLElement): void {
-  const target = document.getElementById('cart-button');
-  if (!target) return;
-  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  if (reduce) return;
-
-  const chip = document.createElement('div');
-  chip.className = 'fixed z-[70] bg-lime text-ink font-bold px-3 py-1 text-sm pointer-events-none';
-  chip.textContent = from.dataset.label?.trim() || from.textContent?.split('—')[0]?.trim() || '+';
-  const r = from.getBoundingClientRect();
-  chip.style.left = `${r.left}px`;
-  chip.style.top = `${r.top}px`;
-  document.body.appendChild(chip);
-  chip.animate(
-    [
-      { transform: 'translate(0,0) scale(1)', opacity: 1 },
-      {
-        transform: `translate(${target.getBoundingClientRect().left - r.left}px, ${target.getBoundingClientRect().top - r.top}px) scale(0.4)`,
-        opacity: 0.2,
-      },
-    ],
-    { duration: 500, easing: 'cubic-bezier(0.4, 0, 0.2, 1)' }
-  ).onfinish = () => chip.remove();
-}
-
-export function initConfigurator(): void {
-  syncUI(current());
-
-  document.querySelectorAll<HTMLElement>('.service-option[data-service]').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const service = btn.dataset.service!;
-      const label = btn.dataset.label!;
-      const price = Number(btn.dataset.price);
-      const option = btn.dataset.option!;
-      const key = service === 'extras' ? option : itemKeyFor(service);
-      const state = current();
-      const existing = state.items.find((i) => i.key === key);
-      if (existing && existing.label === label) {
-        commit(removeItem(state, key));
-      } else {
-        commit(addItem(state, { key, serviceId: service, label, price }));
-        flyChip(btn);
+  document.querySelectorAll<HTMLButtonElement>('.cat-tab').forEach((t) => {
+    t.addEventListener('click', () => {
+      document.querySelectorAll<HTMLButtonElement>('.cat-tab').forEach((x) => x.setAttribute('aria-selected', 'false'));
+      document.querySelectorAll<HTMLElement>('.cat-panel').forEach((p) => (p.hidden = true));
+      t.setAttribute('aria-selected', 'true');
+      const cat = t.dataset.category;
+      if (cat) {
+        const panel = document.getElementById(`panel-${cat}`);
+        if (panel) panel.hidden = false;
       }
     });
   });
 
-  document.querySelectorAll<HTMLElement>('.package-toggle').forEach((btn) => {
+  document.querySelectorAll<HTMLButtonElement>('.option-btn').forEach((btn) => {
     btn.addEventListener('click', () => {
-      const key = itemKeyFor(btn.dataset.service!);
-      const state = current();
-      const exists = state.items.some((i) => i.key === key);
-      if (exists) {
-        commit(removeItem(state, key));
-      } else {
-        commit(
-          addItem(state, {
-            key,
-            serviceId: btn.dataset.service!,
-            label: btn.dataset.label!,
-            price: Number(btn.dataset.price),
-          })
-        );
-        flyChip(btn);
+      const catId = btn.dataset.category as CategoryId | undefined;
+      const groupId = btn.dataset.group || '';
+      const optionId = btn.dataset.option || '';
+      if (!catId) return;
+      const group = getGroup(catId, groupId);
+      if (!group) return;
+      const single = group.kind === 'single';
+      const line: CartLine = {
+        key: lineKey(catId, groupId, optionId, group.kind),
+        categoryId: catId,
+        groupId,
+        optionId,
+        label: btn.dataset.label || '',
+        base: Number(btn.dataset.price || 0),
+        promo: btn.dataset.promo === '1',
+      };
+      state = toggleLine(state, line, single);
+
+      const panel = btn.closest<HTMLElement>('.cat-panel');
+      const select = panel?.querySelector<HTMLSelectElement>('.entornos-select');
+      if (select && isSelected(state, { categoryId: catId, groupId, optionId })) {
+        const count = Number(select.value);
+        state = setEntornos(state, line.key, count, count > 0 ? 10 : 0);
       }
+      persist();
     });
   });
 
-  const cromaWrap = document.querySelector<HTMLElement>('[data-croma]');
-  if (cromaWrap) {
-    cromaWrap.querySelector<HTMLSelectElement>('.croma-entornos')!.addEventListener('change', updateCromaPriceLabel);
-    cromaWrap.querySelectorAll<HTMLElement>('.croma-nivel').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        cromaWrap.querySelectorAll('.croma-nivel').forEach((b) => {
-          b.setAttribute('aria-checked', 'false');
-          b.classList.add('border-ink/20');
-          b.classList.remove('border-ink');
-        });
-        btn.setAttribute('aria-checked', 'true');
-        btn.classList.remove('border-ink/20');
-        btn.classList.add('border-ink');
-        updateCromaPriceLabel();
-      });
+  document.querySelectorAll<HTMLSelectElement>('.entornos-select').forEach((sel) => {
+    sel.addEventListener('change', () => {
+      const catId = sel.closest<HTMLElement>('.cat-panel')?.dataset.panel as CategoryId | undefined;
+      if (!catId) return;
+      const line = state.lines.find((l) => l.categoryId === catId);
+      if (!line) return;
+      const count = Number(sel.value);
+      state = setEntornos(state, line.key, count, count > 0 ? 10 : 0);
+      persist();
     });
-    cromaWrap.querySelector<HTMLButtonElement>('.croma-add')!.addEventListener('click', (e) => {
-      const entornos = Number(cromaWrap.querySelector<HTMLSelectElement>('.croma-entornos')!.value);
-      const nivel = cromaWrap.querySelector<HTMLButtonElement>('.croma-nivel[aria-checked="true"]')!.dataset.nivel as 'pro' | 'full';
-      commit(addItem(current(), buildCromaItem(entornos, nivel)));
-      flyChip(e.currentTarget as HTMLElement);
-    });
-  }
+  });
 
-  window.addEventListener('cart:change', ((e: CustomEvent<CartState>) => {
-    syncUI(e.detail);
-  }) as EventListener);
+  const dur = document.getElementById('duration-slider') as HTMLInputElement | null;
+  dur?.addEventListener('input', () => {
+    state = setDuration(state, Number(dur.value));
+    persist();
+  });
+
+  document.querySelectorAll<HTMLButtonElement>('.mood-btn').forEach((b) => {
+    b.addEventListener('click', () => {
+      state = setMood(state, b.dataset.mood || null);
+      persist();
+    });
+  });
+
+  const senaEl = document.getElementById('sena-toggle') as HTMLInputElement | null;
+  senaEl?.addEventListener('change', () => {
+    state = setSena(state, senaEl.checked);
+    persist();
+  });
+
+  const modal = document.getElementById('preview-modal');
+  const title = document.getElementById('preview-title');
+  const body = document.getElementById('preview-body');
+  document.querySelectorAll<HTMLButtonElement>('.preview-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      if (!modal || !title || !body) return;
+      const src = btn.dataset.preview || '';
+      title.textContent = btn.dataset.title || '';
+      body.innerHTML = src
+        ? `<img src="${src}" alt="" class="w-full h-full object-cover" />`
+        : '<span class="text-muted text-sm">Sin previsualización disponible.</span>';
+      modal.classList.remove('hidden');
+    });
+  });
+  const closePreview = () => modal?.classList.add('hidden');
+  document.getElementById('preview-close')?.addEventListener('click', closePreview);
+  document.getElementById('preview-backdrop')?.addEventListener('click', closePreview);
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closePreview();
+  });
+
+  function persist() {
+    saveCart(state);
+    renderConfigurator(state);
+    emit(state);
+  }
 }

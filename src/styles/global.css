@@ -52,6 +52,31 @@ body {
   animation: marquee 22s linear infinite;
 }
 
+.promo-stripes {
+  background-image: repeating-linear-gradient(
+    45deg,
+    rgb(183 255 46 / 0.14) 0px,
+    rgb(183 255 46 / 0.14) 14px,
+    transparent 14px,
+    transparent 28px
+  );
+  background-size: 39.6px 39.6px;
+  animation: promo-scroll 1.4s linear infinite;
+}
+@keyframes promo-scroll {
+  to { background-position: 39.6px 0; }
+}
+
+@keyframes cart-bump {
+  0% { transform: scale(1); }
+  35% { transform: scale(1.14); }
+  60% { transform: scale(0.97); }
+  100% { transform: scale(1); }
+}
+.cart-bump {
+  animation: cart-bump 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   .animate-marquee { animation: none; }

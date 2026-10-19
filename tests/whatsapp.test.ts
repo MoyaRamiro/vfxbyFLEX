@@ -1,60 +1,47 @@
-import { describe, expect, it } from 'vitest';
-import { buildMessage, buildWhatsAppUrl, sanitizePhone } from '../src/lib/whatsapp';
-import type { CartItem, CustomerInfo } from '../src/lib/cart';
+import { describe, it, expect } from 'vitest';
+import { buildMessage } from '../src/lib/whatsapp';
+import { emptyCart, toggleLine, setDuration } from '../src/lib/cart';
+import { cartTotals } from '../src/lib/pricing';
 
-const customer: CustomerInfo = { name: 'Juan', instagram: 'juanbeats', notes: 'todo en rojo' };
-
-const items: CartItem[] = [
-  { key: 'visualizer', serviceId: 'visualizer', label: 'Visualizer Full', price: 30 },
-  { key: 'croma', serviceId: 'croma', label: 'Croma (3 entornos, VFX Full)', price: 75 },
-  { key: 'montaje', serviceId: 'montaje', label: 'Montaje', price: 15 },
-  { key: 'reel-2', serviceId: 'extras', label: '2 Reels', price: 17 },
-];
-
-describe('buildMessage', () => {
-  it('formats services, extras, notes and total', () => {
-    const msg = buildMessage({ items, customer });
-    expect(msg).toContain('🎬 Pedido de VFX — vfxbyflex');
-    expect(msg).toContain('👤 Nombre: Juan');
-    expect(msg).toContain('📷 Instagram: @juanbeats');
-    expect(msg).toContain('SERVICIOS:');
-    expect(msg).toContain('• Visualizer Full — USD 30');
-    expect(msg).toContain('• Croma (3 entornos, VFX Full) — USD 75');
-    expect(msg).toContain('• Montaje — USD 15');
-    expect(msg).toContain('EXTRAS:');
-    expect(msg).toContain('• 2 Reels — USD 17');
-    expect(msg).toContain('📝 NOTAS:');
-    expect(msg).toContain('"todo en rojo"');
-    expect(msg).toContain('🎵 Canción: enviá el MP3 por este chat.');
-    expect(msg).toContain('💰 TOTAL: USD 137');
+describe('whatsapp', () => {
+  it('includes 30% savings when promo active', () => {
+    let c = emptyCart();
+    const line = { key: 'visual:v1', categoryId: 'visual' as any, groupId: 'v1g', optionId: 'a', label: 'Visual 2.5D', base: 45, promo: true };
+    c = toggleLine(c, line, true);
+    const msg = buildMessage(c, true);
+    expect(msg).toContain('30% OFF');
+    expect(msg).toContain('TOTAL');
   });
 
-  it('omits extras and notes sections when empty', () => {
-    const msg = buildMessage({
-      items: [items[0]],
-      customer: { name: 'Ana', instagram: '', notes: '' },
-    });
-    expect(msg).not.toContain('EXTRAS:');
-    expect(msg).not.toContain('📝 NOTAS:');
-    expect(msg).not.toContain('📷 Instagram:');
-    expect(msg).toContain('👤 Nombre: Ana');
+  it('shows chat mode intro by default', () => {
+    const msg = buildMessage(emptyCart(), false);
+    expect(msg).toContain('vfxbyflex');
   });
 
-  it('uses — when name is empty', () => {
-    const msg = buildMessage({ items: [items[0]], customer: { name: '', instagram: '', notes: '' } });
-    expect(msg).toContain('👤 Nombre: —');
-  });
-});
+  it('keeps totals coherent: Subtotal + Duración - Ahorro = Total', () => {
+    let c = emptyCart();
+    c = setDuration(c, 210);
+    c = toggleLine(c, {
+      key: 'visual:visual-tipo', categoryId: 'visual', groupId: 'visual-tipo',
+      optionId: 'visual-25d-imagen', label: 'Visual 2.5D', base: 45, promo: true,
+    }, true);
+    c = toggleLine(c, {
+      key: 'vfx:vfx-full-camaras', categoryId: 'vfx', groupId: 'vfx-complementos-full',
+      optionId: 'vfx-full-camaras', label: 'Cámaras lentas', base: 15, promo: false,
+    }, false);
 
-describe('buildWhatsAppUrl', () => {
-  it('builds wa.me link with encoded message', () => {
-    const url = buildWhatsAppUrl('5493794270276', 'hola\nmundo');
-    expect(url).toBe('https://wa.me/5493794270276?text=hola%0Amundo');
-  });
-});
+    const t = cartTotals(c, true);
+    // Duration (3:30) charged once: +30
+    expect(t.durationAdjustment).toBe(30);
+    expect(t.subtotal + t.durationAdjustment - t.savings).toBe(t.total);
 
-describe('sanitizePhone', () => {
-  it('strips spaces, dashes and plus', () => {
-    expect(sanitizePhone('+54 9 3794 27-0276')).toBe('5493794270276');
+    const msg = buildMessage(c, true);
+    const num = (re: RegExp) => Number(msg.match(re)?.[1]?.replace(',', '.'));
+    const sub = num(/Subtotal: USD ([\d.,]+)/);
+    const save = num(/Ahorro 30% OFF: -USD ([\d.,]+)/);
+    const total = num(/TOTAL: USD ([\d.,]+)/);
+    const adjLine = msg.match(/Ajuste por duración \([^)]+\): ([+-])USD ([\d.,]+)/);
+    const adj = adjLine ? (adjLine[1] === '-' ? -1 : 1) * Number(adjLine[2].replace(',', '.')) : 0;
+    expect(sub + adj - save).toBe(total);
   });
 });

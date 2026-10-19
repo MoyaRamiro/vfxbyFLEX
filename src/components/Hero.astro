@@ -1,83 +1,50 @@
 ---
-import { SITE } from '../config/site';
+const TITLE = 'VFX';
+const SLOGAN = 'Animaciones y efectos que le dan movimiento a tus ideas.';
 ---
 
-<header class="relative min-h-screen flex flex-col justify-between p-6 md:p-10 scanlines overflow-hidden">
-  <div class="flex items-center justify-between text-sm font-medium">
-    <span class="flex items-center gap-2">
-      <span class="inline-block w-2 h-2 bg-lime"></span> EDITANDO DESDE {SITE.instagram.toUpperCase()}
-    </span>
-    <a href={SITE.instagramUrl} target="_blank" rel="noopener noreferrer" class="underline-offset-4 hover:underline hover:decoration-cyan hover:decoration-2 transition-colors">
-      @{SITE.instagram}
-    </a>
-  </div>
+<header class="px-6 md:px-10 py-10 bg-paper border-b-2 border-ink">
+  <div class="max-w-6xl mx-auto flex flex-col gap-10">
+    <nav class="flex items-center justify-between gap-3">
+      <a href="/" class="flex flex-col shrink-0">
+        <span class="text-xs font-mono tracking-widest text-muted">VFX</span>
+        <span class="text-2xl md:text-3xl font-bold leading-tight">VFXbyFlex</span>
+      </a>
+      <div class="flex items-center gap-2 sm:gap-3">
+        <a href="#servicios" class="hidden md:inline-block border-2 border-ink px-4 py-2 font-bold hover:bg-ink hover:text-paper transition-colors">Armar pedido</a>
+        <a id="wa-cta" href="#" class="border-2 border-ink bg-lime px-3 sm:px-4 py-2 font-bold hover:bg-ink hover:text-paper transition-colors">WhatsApp</a>
+        <button type="button" class="cart-trigger hidden sm:inline-block border-2 border-ink px-3 sm:px-4 py-2 font-bold hover:bg-ink hover:text-paper transition-colors">
+          Carrito <span data-cart-count class="font-mono">0</span>
+        </button>
+      </div>
+    </nav>
 
-  <div class="max-w-6xl">
-    <p class="hero-eyebrow text-sm font-medium tracking-[0.3em] uppercase text-muted mb-4">Servicios de VFX · Visualizers · Montaje</p>
-    <h1 class="hero-title font-bold leading-[0.9] text-[clamp(3.5rem,14vw,11rem)] tracking-tight">
-      VFXBY<span class="inline-block bg-lime text-ink px-3">FLEX</span>
-    </h1>
-    <p class="hero-tagline mt-6 text-lg md:text-2xl max-w-xl">
-      Elegí tus servicios, armá tu pedido y mandámelo directo por WhatsApp. Sin vueltas.
-    </p>
+    <div class="flex flex-col lg:flex-row items-start lg:items-end justify-between gap-10">
+      <div class="max-w-2xl">
+        <span class="block text-xs font-mono tracking-widest text-muted mb-3">VFX</span>
+        <h1 class="text-4xl sm:text-5xl md:text-7xl font-bold leading-[0.98] tracking-tight">{SLOGAN}</h1>
+        <p class="mt-5 text-lg text-muted max-w-xl">
+          Configurador profesional para videos cortos, lyric visuals, croma y VFX. Elegí duración, mood y complementos. Total en USD y envío directo por WhatsApp.
+        </p>
+        <div class="mt-6 flex flex-wrap gap-3">
+          <a href="#servicios" class="border-2 border-ink px-5 py-3 font-bold bg-ink text-paper hover:bg-paper hover:text-ink transition-colors">Empezar ahora</a>
+          <a href="#trabajos" class="border-2 border-ink px-5 py-3 font-bold hover:bg-ink hover:text-paper transition-colors">Ver trabajos</a>
+        </div>
+      </div>
+      <div class="w-full lg:w-80 flex flex-col gap-3 text-sm">
+        <div class="border-2 border-ink p-4">
+          <p class="font-mono text-xs text-muted">DISEÑADO PARA VELOCIDAD</p>
+          <p class="mt-1 font-medium">Pedido en 1 minuto, sin formularios largos.</p>
+        </div>
+        <div class="border-2 border-ink p-4">
+          <p class="font-mono text-xs text-muted">PRECIO CLARO</p>
+          <p class="mt-1 font-medium">Precios en USD. Descuento 30% SOLO POR HOY.</p>
+        </div>
+        <div class="border-2 border-ink p-4">
+          <p class="font-mono text-xs text-muted">ENTREGA DIRECTA</p>
+          <p class="mt-1 font-medium">Se envía por WhatsApp con 2 modos de respuesta.</p>
+        </div>
+      </div>
+    </div>
   </div>
-
-  <div class="flex flex-wrap items-center gap-4">
-    <a href="#servicios" class="hero-cta group inline-flex items-center gap-3 bg-ink text-paper px-8 py-4 font-bold text-lg rounded-none border-2 border-ink hover:bg-lime hover:text-ink hover:border-lime transition-colors">
-      COTIZAR AHORA
-      <span class="group-hover:translate-x-1 transition-transform">→</span>
-    </a>
-    <span class="text-sm text-muted font-mono">00:00:00 · REC</span>
-  </div>
-
-  <div class="hero-flash pointer-events-none absolute inset-0 bg-paper opacity-0"></div>
 </header>
-
-<script>
-  import gsap from 'gsap';
-  import { SplitText } from 'gsap/SplitText';
-
-  gsap.registerPlugin(SplitText);
-
-  const mm = gsap.matchMedia();
-  mm.add('(prefers-reduced-motion: no-preference)', () => {
-    const title = document.querySelector<HTMLElement>('.hero-title');
-    const flash = document.querySelector<HTMLElement>('.hero-flash');
-    if (!title || !flash) return;
-
-    const split = new SplitText(title, { type: 'chars' });
-    const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
-
-    tl.set(flash, { opacity: 0.9 })
-      .to(flash, { opacity: 0, duration: 0.18 })
-      .from(split.chars, {
-        opacity: 0,
-        y: 40,
-        rotateX: -40,
-        stagger: 0.045,
-        duration: 0.6,
-      }, 0.05)
-      .from(['.hero-eyebrow', '.hero-tagline', '.hero-cta'], {
-        opacity: 0,
-        y: 24,
-        stagger: 0.12,
-        duration: 0.5,
-      }, '-=0.3');
-
-    // RGB-split style: brief cyan/lime offset on a couple of chars
-    const chars = split.chars;
-    chars.forEach((c, i) => {
-      if (i % 5 === 0) {
-        gsap.fromTo(c, { textShadow: '3px 0 0 #2ee6ff, -3px 0 0 #b7ff2e' }, {
-          textShadow: '0px 0 0 transparent, 0px 0 0 transparent',
-          duration: 0.5,
-          delay: 0.3 + i * 0.045,
-        });
-      }
-    });
-
-    return () => {
-      split.revert();
-    };
-  });
-</script>

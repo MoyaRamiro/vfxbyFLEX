@@ -1,5 +1,18 @@
 ---
-import { SERVICES, CROMA_ENTORNOS_OPTIONS, PACKAGE_PRICES } from '../data/services';
+import { CATEGORIES } from '../data/catalog';
+import { DURATION, MOODS, PROMO, SENA } from '../config/order';
+import { money, promoOriginal } from '../lib/pricing';
+import visualizer from '../assets/projects/visualizer.png';
+import croma from '../assets/projects/croma.png';
+import vfxPro from '../assets/projects/vfx-pro.png';
+import montaje from '../assets/projects/montaje.png';
+
+const previews: Record<string, string> = {
+  visual: visualizer.src,
+  croma: croma.src,
+  vfx: vfxPro.src,
+  montaje: montaje.src,
+};
 ---
 
 <section id="servicios" class="px-6 md:px-10 py-24 md:py-32 bg-surface">
@@ -8,102 +21,155 @@ import { SERVICES, CROMA_ENTORNOS_OPTIONS, PACKAGE_PRICES } from '../data/servic
       <h2 class="servicios-title text-4xl md:text-6xl font-bold">Configurá tu pedido</h2>
       <span class="hidden md:block font-mono text-sm text-muted">TIMELINE · SERVICIOS</span>
     </div>
-    <p class="text-muted mb-12 max-w-xl">Elegí los servicios que necesitás. El total se actualiza en vivo y al terminar lo mandás por WhatsApp.</p>
+    <p class="text-muted mb-6 max-w-xl">
+      Armá tu pedido paso a paso. El total se actualiza en vivo y al terminar lo mandás por WhatsApp.
+    </p>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-      {SERVICES.map((service) => (
-        <article
-          class="service-card border-2 border-ink bg-paper p-6 flex flex-col gap-4"
-          data-service={service.id}
-        >
-          <header>
-            <h3 class="text-2xl font-bold">{service.name}</h3>
-            <p class="text-sm text-muted mt-1">{service.tagline}</p>
-          </header>
+    <div id="promo-banner" class="promo-banner mb-8 relative overflow-hidden border-2 border-ink bg-ink" hidden>
+      <div class="promo-stripes absolute inset-0" aria-hidden="true"></div>
+      <div class="relative flex flex-wrap items-center justify-between gap-4 px-6 py-5">
+        <div class="flex items-baseline gap-4">
+          <span class="text-5xl md:text-7xl font-black tracking-tighter text-lime leading-none">30% OFF</span>
+          <span class="text-xl md:text-3xl font-bold text-paper">SOLO POR HOY</span>
+        </div>
+        <div class="flex items-center gap-3">
+          <span class="font-mono text-sm text-paper/70">Termina en</span>
+          <span id="promo-countdown" class="font-mono text-2xl md:text-3xl font-black bg-lime text-ink px-4 py-1 tabular-nums">--:--:--</span>
+        </div>
+      </div>
+    </div>
 
-          {service.kind === 'select' && service.id !== 'croma' && service.id !== 'extras' && (
-            <div class="flex flex-col gap-2" role="radiogroup" aria-label={service.name}>
-              {service.options.map((o) => (
-                <button
-                  type="button"
-                  class="service-option flex items-center justify-between border-2 border-ink/20 px-4 py-3 text-left hover:border-ink transition-colors"
-                  data-service={service.id}
-                  data-option={o.id}
-                  data-label={o.label}
-                  data-price={o.price}
-                  role="radio"
-                  aria-checked="false"
-                >
-                  <span>{o.label}</span>
-                  <span class="font-mono font-bold">USD {o.price}</span>
-                </button>
-              ))}
-            </div>
-          )}
-
-          {service.id === 'croma' && (
-            <div class="flex flex-col gap-4" data-croma>
-              <label class="flex flex-col gap-1 text-sm font-medium">
-                Cantidad de entornos
-                <select
-                  id="croma-entornos"
-                  name="croma-entornos"
-                  class="croma-entornos border-2 border-ink px-3 py-2 bg-paper"
-                  aria-label="Cantidad de entornos"
-                >
-                  {CROMA_ENTORNOS_OPTIONS.map((n) => (
-                    <option value={n}>{n} entornos</option>
-                  ))}
-                </select>
-              </label>
-              <div class="flex gap-2" role="radiogroup" aria-label="Nivel de VFX del croma">
-                <button type="button" class="croma-nivel flex-1 border-2 border-ink px-3 py-2 font-bold" data-nivel="pro" role="radio" aria-checked="true">VFX Pro</button>
-                <button type="button" class="croma-nivel flex-1 border-2 border-ink/20 px-3 py-2 font-bold" data-nivel="full" role="radio" aria-checked="false">VFX Full <span class="text-muted font-normal">(+25)</span></button>
-              </div>
-              <button
-                type="button"
-                class="croma-add bg-ink text-paper font-bold py-3 hover:bg-lime hover:text-ink transition-colors"
-                data-service="croma"
-              >
-                Agregar — <span class="croma-price font-mono">USD 35</span>
-              </button>
-            </div>
-          )}
-
-          {service.kind === 'package' && (
+    <div class="grid lg:grid-cols-[minmax(0,1fr)_300px] gap-8 items-start">
+      <div class="min-w-0">
+        <div role="tablist" aria-label="Categorías" class="flex flex-wrap gap-2 mb-6">
+          {CATEGORIES.map((c, i) => (
             <button
               type="button"
-              class="package-toggle mt-auto flex items-center justify-between border-2 border-ink px-4 py-3 font-bold hover:bg-ink hover:text-paper transition-colors"
-              data-service={service.id}
-              data-label={service.name}
-              data-price={PACKAGE_PRICES[service.id as keyof typeof PACKAGE_PRICES]}
-              aria-pressed="false"
+              role="tab"
+              class="cat-tab border-2 border-ink px-4 py-2 font-bold hover:bg-ink hover:text-paper transition-colors"
+              data-category={c.id}
+              aria-selected={i === 0}
+              aria-controls={`panel-${c.id}`}
             >
-              <span class="package-toggle-label">Agregar</span>
-              <span class="font-mono package-toggle-price">USD {PACKAGE_PRICES[service.id as keyof typeof PACKAGE_PRICES]}</span>
+              {c.name}
             </button>
-          )}
+          ))}
+        </div>
 
-          {service.id === 'extras' && (
-            <div class="flex flex-col gap-2">
-              {service.options.map((o) => (
-                <button
-                  type="button"
-                  class="service-option flex items-center justify-between border-2 border-ink/20 px-4 py-3 text-left hover:border-ink transition-colors"
-                  data-service="extras"
-                  data-option={o.id}
-                  data-label={o.label}
-                  data-price={o.price}
-                  aria-pressed="false"
-                >
-                  <span>{o.label}</span>
-                  <span class="font-mono font-bold">USD {o.price}</span>
-                </button>
-              ))}
-            </div>
-          )}
-        </article>
-      ))}
+        {CATEGORIES.map((c, i) => (
+          <div id={`panel-${c.id}`} class="cat-panel border-2 border-ink bg-paper p-6" data-panel={c.id} role="tabpanel" aria-label={c.name} hidden={i !== 0}>
+            <header class="mb-5">
+              <h3 class="text-2xl font-bold">{c.name}</h3>
+              <p class="text-sm text-muted mt-1">{c.tagline}</p>
+            </header>
+
+            {c.groups.map((g) => (
+              <fieldset class="group mb-6 last:mb-0" data-group={g.id} data-show-when={g.showWhen ?? ''} hidden={Boolean(g.showWhen)}>
+                <legend class="font-mono text-xs tracking-widest text-muted mb-3">{g.name.toUpperCase()}</legend>
+                <div class="flex flex-col gap-3" role={g.kind === 'single' ? 'radiogroup' : 'group'} aria-label={`${c.name} — ${g.name}`}>
+                  {g.options.map((o) => (
+                    <div class="option-row flex items-stretch gap-2" data-option-row={o.id}>
+                      <button
+                        type="button"
+                        class="option-btn flex flex-1 items-center justify-between gap-3 border-2 border-ink/20 px-4 py-3 text-left hover:border-ink transition-colors"
+                        data-category={c.id}
+                        data-group={g.id}
+                        data-option={o.id}
+                        data-label={o.label}
+                        data-price={o.price}
+                        data-promo={o.promo ? '1' : '0'}
+                        data-single={g.kind === 'single' ? '1' : '0'}
+                        role={g.kind === 'single' ? 'radio' : undefined}
+                        aria-checked={g.kind === 'single' ? 'false' : undefined}
+                        aria-pressed={g.kind === 'single' ? undefined : 'false'}
+                      >
+                        <span class="flex flex-col">
+                          <span class="font-bold">{o.label}</span>
+                          {o.note && <span class="text-xs text-muted">{o.note}</span>}
+                        </span>
+                        <span class="option-price flex flex-col items-end shrink-0">
+                          {o.promo && (
+                            <s class="option-old text-xs text-muted" data-price={o.price}>
+                              USD {money(promoOriginal(o.price))}
+                            </s>
+                          )}
+                          <span class="option-now font-mono font-bold" data-price={o.price} data-promo={o.promo ? '1' : '0'}>USD {money(o.price)}</span>
+                          {o.promo && (
+                            <span class="option-badge bg-lime text-ink text-[10px] font-bold px-1.5 py-0.5 leading-none">-30%</span>
+                          )}
+                        </span>
+                      </button>
+                      <button
+                        type="button"
+                        class="preview-btn border-2 border-ink/20 px-3 text-sm hover:border-ink hover:bg-ink hover:text-paper transition-colors"
+                        data-preview={previews[c.id] ?? ''}
+                        data-title={`${c.name} · ${o.label}`}
+                        aria-label={`Previsualizar ${o.label}`}
+                      >
+                        Ver
+                      </button>
+                    </div>
+                  ))}
+                </div>
+
+                {c.entornos && (
+                  <label class="mt-4 flex items-center gap-3 text-sm font-medium">
+                    Cantidad de entornos
+                    <select class="entornos-select border-2 border-ink px-3 py-2 bg-paper" data-default={c.entornos.defaultValue} aria-label="Cantidad de entornos">
+                      {Array.from({ length: c.entornos.max - c.entornos.min + 1 }, (_, n) => c.entornos!.min + n).map((n) => (
+                        <option value={n} selected={n === c.entornos!.defaultValue}>{n} {n === 1 ? 'entorno' : 'entornos'} (+USD {money(n * c.entornos!.priceEach)})</option>
+                      ))}
+                    </select>
+                  </label>
+                )}
+              </fieldset>
+            ))}
+          </div>
+        ))}
+      </div>
+
+      <aside class="flex flex-col gap-6 border-2 border-ink bg-paper p-6 lg:sticky lg:top-6">
+        <div>
+          <label for="duration-slider" class="font-mono text-xs tracking-widest text-muted">DURACIÓN</label>
+          <div class="flex items-baseline justify-between mt-2 mb-3">
+            <output id="duration-value" for="duration-slider" class="text-3xl font-bold font-mono">2:00</output>
+            <span id="duration-adjust" class="text-sm text-muted font-mono">USD +0</span>
+          </div>
+          <input id="duration-slider" type="range" class="w-full accent-ink" min={DURATION.minSec} max={DURATION.maxSec} step={DURATION.stepSec} value={DURATION.defaultSec} />
+          <p class="text-xs text-muted mt-2">Base 2:00. ±USD 10 por cada 30s. No aplica a Extras.</p>
+        </div>
+
+        <div>
+          <span class="font-mono text-xs tracking-widest text-muted">MOOD</span>
+          <div class="flex flex-col gap-2 mt-3" role="radiogroup" aria-label="Mood del video">
+            {MOODS.map((m) => (
+              <button type="button" class="mood-btn border-2 border-ink/20 px-3 py-2 text-left text-sm font-medium hover:border-ink transition-colors" data-mood={m.id} role="radio" aria-checked="false">
+                {m.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {SENA.enabled && (
+          <div class="border-2 border-ink bg-lime/20 px-4 py-3">
+            <p class="font-bold text-sm">Reserva con seña</p>
+            <p class="text-xs text-muted mt-1">
+              {SENA.amount === null ? 'El monto de la seña se confirma por WhatsApp.' : `Monto: USD ${money(SENA.amount)}`}
+            </p>
+          </div>
+        )}
+      </aside>
+    </div>
+  </div>
+
+  <div id="preview-modal" class="fixed inset-0 z-[80] hidden" role="dialog" aria-modal="true" aria-labelledby="preview-title">
+    <button type="button" id="preview-backdrop" class="absolute inset-0 bg-ink/70 cursor-default" aria-label="Cerrar previsualización" tabindex="-1"></button>
+    <div class="relative mx-auto mt-[10vh] w-[min(92vw,720px)] border-2 border-ink bg-paper p-4">
+      <div class="flex items-center justify-between gap-4 mb-3">
+        <h4 id="preview-title" class="font-bold"></h4>
+        <button type="button" id="preview-close" class="border-2 border-ink w-10 h-10 font-bold hover:bg-ink hover:text-paper transition-colors" aria-label="Cerrar">✕</button>
+      </div>
+      <div id="preview-body" class="aspect-video bg-surface border-2 border-ink/10 flex items-center justify-center overflow-hidden"></div>
     </div>
   </div>
 </section>
