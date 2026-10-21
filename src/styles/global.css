@@ -77,6 +77,52 @@ body {
   animation: cart-bump 0.45s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
+/* Slider de duración: cursor explícito y pulgar grande para que nunca aparezca
+   el cursor ambiguo del control nativo. */
+.duration-range {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 28px;
+  background: transparent;
+  cursor: pointer;
+}
+.duration-range::-webkit-slider-runnable-track {
+  height: 6px;
+  background: var(--color-ink);
+}
+.duration-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 24px;
+  height: 24px;
+  margin-top: -9px;
+  border: 2px solid var(--color-ink);
+  background: var(--color-lime);
+  cursor: grab;
+}
+.duration-range:active::-webkit-slider-thumb {
+  cursor: grabbing;
+}
+.duration-range::-moz-range-track {
+  height: 6px;
+  background: var(--color-ink);
+}
+.duration-range::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--color-ink);
+  border-radius: 0;
+  background: var(--color-lime);
+  cursor: grab;
+}
+.duration-range:active::-moz-range-thumb {
+  cursor: grabbing;
+}
+.duration-range:focus-visible {
+  outline: 2px solid var(--color-ink);
+  outline-offset: 4px;
+}
+
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   .animate-marquee { animation: none; }

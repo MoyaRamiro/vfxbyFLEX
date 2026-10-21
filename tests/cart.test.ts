@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { emptyCart, toggleLine, lineKey, setDuration, setSena, setMode, setMood } from '../src/lib/cart';
 import { cartTotals, durationAdjustment, lineTotal, lineUnit, lineOriginal, formatDuration, promoOriginal } from '../src/lib/pricing';
 import { promoActive, promoRemaining, formatCountdown } from '../src/lib/promo';
+import { parseDurationInput, snapDuration } from '../src/lib/configurator-ui';
 
 describe('cart', () => {
   beforeEach(() => {});
@@ -47,6 +48,46 @@ describe('cart', () => {
     const remaining = promoRemaining(new Date('2020-01-01T12:00:00'));
     expect(remaining).toBeGreaterThan(0);
     expect(remaining).toBeLessThanOrEqual(24 * 60 * 60 * 1000);
+  });
+
+  describe('typed duration', () => {
+    it('parses minutes and clock formats', () => {
+      expect(parseDurationInput('3:30')).toBe(210);
+      expect(parseDurationInput('03:05')).toBe(185);
+      expect(parseDurationInput('3')).toBe(180);
+      expect(parseDurationInput('2,5')).toBe(150);
+      expect(parseDurationInput('2.5')).toBe(150);
+      expect(parseDurationInput('')).toBeNull();
+      expect(parseDurationInput('abc')).toBeNull();
+    });
+
+    it('snaps to the slider range and step', () => {
+      expect(snapDuration(185)).toBe(190);
+      expect(snapDuration(0)).toBe(60);
+      expect(snapDuration(999)).toBe(210);
+      expect(snapDuration(150)).toBe(150);
+    });
+  });
+
+  describe('duration floor', () => {
+    const line = (categoryId: string, optionId: string, base: number) => ({
+      key: `${categoryId}:${optionId}`, categoryId: categoryId as any, groupId: 'g',
+      optionId, label: optionId, base, promo: false,
+    });
+
+    it('never drops a line below USD 10 after lowering the duration', () => {
+      // Color (5) keeps its own price instead of going negative.
+      expect(lineTotal(line('montaje', 'montaje-color', 5) as any, false, -20)).toBe(5);
+      // Transiciones (19) bottoms out at 10, not -1.
+      expect(lineTotal(line('montaje', 'montaje-transiciones', 19) as any, false, -20)).toBe(10);
+      // A more expensive line still gets the full -20.
+      expect(lineTotal(line('croma', 'croma-25d-3d', 119) as any, false, -20)).toBe(99);
+    });
+
+    it('never produces negative prices', () => {
+      expect(lineTotal(line('montaje', 'montaje-color', 5) as any, false, -20)).toBeGreaterThanOrEqual(0);
+      expect(cartTotals({ ...emptyCart(), lines: [line('montaje', 'montaje-color', 5)] } as any, false).total).toBeGreaterThanOrEqual(0);
+    });
   });
 
   describe('bundles', () => {

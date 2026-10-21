@@ -73,6 +73,29 @@ test('duration is applied per product, not once per order', async ({ page }) => 
   await expect(page.locator('#cart-total')).toContainText('316');
 });
 
+test('typed duration moves the slider and updates prices', async ({ page }) => {
+  await page.goto('/');
+  const input = page.locator('#duration-input');
+
+  await input.fill('1:00');
+  await input.press('Enter');
+  await expect(page.locator('#duration-slider')).toHaveValue('60');
+  await expect(page.locator('#duration-value')).toHaveText('1:00');
+  await expect(input).toHaveValue('1:00');
+  await expect(page.locator('.option-btn[data-option="montaje-color"] .option-now')).toHaveText('USD 5');
+
+  await input.fill('3');
+  await input.press('Enter');
+  await expect(page.locator('#duration-slider')).toHaveValue('180');
+  await expect(page.locator('#duration-value')).toHaveText('3:00');
+
+  await page.locator('#duration-slider').evaluate((el) => {
+    (el as HTMLInputElement).value = '150';
+    el.dispatchEvent(new Event('input', { bubbles: true }));
+  });
+  await expect(input).toHaveValue('2:30');
+});
+
 test('preset card pre-arms the order and opens the drawer', async ({ page }) => {
   await page.goto('/');
   await page.locator('.preset-card[data-preset="visual-25d"]').click();

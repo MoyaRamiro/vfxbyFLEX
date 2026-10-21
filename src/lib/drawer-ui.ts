@@ -8,7 +8,7 @@ import {
   setMode,
   updateCustomer,
 } from './cart';
-import { cartTotals, durationAdjustment, formatDuration, lineTotal, money } from './pricing';
+import { cartTotals, durationAdjustment, formatDuration, lineTotal, money, senaAmount } from './pricing';
 import { promoActive } from './promo';
 import { buildMessage, buildSenaMessage, buildWhatsAppUrl } from './whatsapp';
 import { SITE } from '../config/site';
@@ -127,9 +127,11 @@ export function initDrawer() {
       senaBtn.disabled = disabled;
       senaBtn.classList.toggle('opacity-40', disabled);
       senaBtn.classList.toggle('pointer-events-none', disabled);
-      // La seña nunca supera el total del pedido.
-      if (!disabled && SENA.amount !== null) {
-        senaBtn.textContent = `Señar · USD ${money(Math.min(SENA.amount, totals.total))}`;
+      // La seña es el 10% del total del pedido.
+      if (SENA.rate !== null) {
+        senaBtn.textContent = disabled
+          ? `Señar · ${Math.round(SENA.rate * 100)}%`
+          : `Señar · USD ${money(senaAmount(totals.total))}`;
       }
     }
 

@@ -1,30 +1,28 @@
 ---
-import { Image } from 'astro:assets';
-import visual25d from '../assets/projects/visualizer.png';
-import croma from '../assets/projects/croma.png';
-import vfxPro from '../assets/projects/vfx-pro.png';
-
 const cards = [
   {
     preset: 'croma-full-4',
     title: 'Croma Full · 4 entornos',
+    category: 'CROMA',
     tags: ['Croma', '3D'],
     note: 'Armado con los 4 entornos incluidos.',
-    image: croma,
+    video: '/videos/croma 2.5D y 3D.webm',
   },
   {
     preset: 'vfx-full-all',
     title: 'VFX Full',
+    category: 'VFX',
     tags: ['VFX'],
     note: 'Todos los componentes del paquete.',
-    image: vfxPro,
+    video: '/videos/vfx-full.webm',
   },
   {
     preset: 'visual-25d',
     title: 'Visual con imagen 2.5D',
+    category: 'VISUAL',
     tags: ['Visual'],
     note: 'Una imagen en movimiento 2.5D.',
-    image: visual25d,
+    video: '/videos/visuales.webm',
   },
 ];
 ---
@@ -41,11 +39,23 @@ const cards = [
       {cards.map((p) => (
         <button
           type="button"
-          class="preset-card group flex flex-col border-2 border-ink bg-paper overflow-hidden hover:bg-lime/10 transition-colors text-left"
+          class="preset-card group flex flex-col border-2 border-ink bg-paper overflow-hidden hover:border-lime transition-colors text-left"
           data-preset={p.preset}
         >
-          <div class="aspect-video overflow-hidden">
-            <Image src={p.image} alt={p.title} class="w-full h-full object-cover object-center group-hover:scale-[1.03] transition-transform duration-300" loading="lazy" />
+          <div class="flex items-center justify-between border-b-2 border-ink px-3 py-2">
+            <span class="font-mono text-xs font-bold tracking-widest">{p.category}</span>
+            <span class="font-mono text-[10px] tracking-widest text-muted">PREVIEW</span>
+          </div>
+          <div class="relative aspect-video overflow-hidden bg-ink">
+            <video
+              src={encodeURI(p.video)}
+              class="w-full h-full object-cover pointer-events-none group-hover:scale-[1.03] transition-transform duration-300"
+              autoplay
+              muted
+              loop
+              playsinline
+              preload="metadata"
+            ></video>
           </div>
           <div class="p-4 border-t-2 border-ink flex flex-col gap-2">
             <h3 class="text-lg font-bold">{p.title}</h3>

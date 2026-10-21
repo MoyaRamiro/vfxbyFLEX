@@ -45,14 +45,14 @@ describe('whatsapp', () => {
     expect(sub - save).toBe(total);
   });
 
-  it('builds a seña-only message with the fixed amount', () => {
+  it('builds a seña-only message with 10% of the total', () => {
     let c = emptyCart();
     c = toggleLine(c, {
       key: 'visual:visual-tipo', categoryId: 'visual', groupId: 'visual-tipo',
       optionId: 'visual-25d-imagen', label: 'Visual 2.5D', base: 45, promo: true,
     }, true);
     const msg = buildSenaMessage(c, true);
-    expect(msg).toContain('USD 20');
+    expect(msg).toContain('Seña (10%): USD 4,50');
     expect(msg).toContain('Total del pedido');
     expect(msg).not.toContain('Enviar pedido');
   });

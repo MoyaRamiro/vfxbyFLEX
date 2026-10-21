@@ -1,7 +1,8 @@
 ---
 import { SITE } from '../config/site';
 import { AUDIO_NOTE, SENA, WHATSAPP_MODES } from '../config/order';
-import { money } from '../lib/pricing';
+
+const SENA_PCT = Math.round((SENA.rate ?? 0) * 100);
 ---
 
 <button
@@ -88,7 +89,7 @@ import { money } from '../lib/pricing';
   <footer class="flex flex-col gap-3 border-t-2 border-ink p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
     {SENA.enabled && (
       <button id="cart-sena" class="border-2 border-ink bg-lime px-5 py-3 font-bold text-center hover:bg-ink hover:text-paper transition-colors">
-        Señar {SENA.amount !== null ? `· USD ${money(SENA.amount)}` : ''}
+        Señar {SENA.rate !== null ? `· ${SENA_PCT}%` : ''}
       </button>
     )}
     <button id="cart-wa" class="border-2 border-ink px-5 py-3 font-bold text-center hover:bg-ink hover:text-paper transition-colors">Enviar pedido</button>

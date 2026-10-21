@@ -22,8 +22,9 @@ export const PROMO = {
 
 export const SENA = {
   enabled: true,
-  label: 'Seña de reserva',
-  amount: 20 as number | null,
+  label: 'Seña',
+  // La seña es un porcentaje del total del pedido (0.1 = 10%).
+  rate: 0.1 as number | null,
 } as const;
 
 export interface MoodOption {

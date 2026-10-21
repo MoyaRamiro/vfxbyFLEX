@@ -25,10 +25,11 @@ const optionVideos: Record<string, string> = {
   'vfx-full': '/videos/vfx-full.webm',
   'montaje-montaje': '/videos/montage.webm',
   'montaje-transiciones': '/videos/transiciones.webm',
-  'visual-only-lyrics': '/videos/visuales.webm',
-  'visual-lyrics-pro': '/videos/visual-full.webm',
-  'visual-25d-imagen': '/videos/visual-full.webm',
+  'visual-25d-imagen': '/videos/visuales.webm',
 };
+
+// Estas opciones no llevan previsualización (ni video ni imagen).
+const noPreview = new Set(['visual-only-lyrics', 'visual-lyrics-pro']);
 
 // Ejemplos por componente de los paquetes VFX (según el sufijo del id).
 const componentVideo = (id: string): string | undefined => {
@@ -125,16 +126,31 @@ const componentVideo = (id: string): string | undefined => {
                           )}
                         </span>
                       </button>
-                      <button
-                        type="button"
-                        class="preview-btn border-2 border-ink/20 px-3 text-sm hover:border-ink hover:bg-ink hover:text-paper transition-colors"
-                        data-preview={optionVideos[o.id] ?? previews[c.id] ?? ''}
-                        data-preview-type={optionVideos[o.id] ? 'video' : 'image'}
-                        data-title={`${c.name} · ${o.label}`}
-                        aria-label={`Previsualizar ${o.label}`}
-                      >
-                        Ver
-                      </button>
+                      {!noPreview.has(o.id) && (
+                        <button
+                          type="button"
+                          class="preview-btn group relative shrink-0 w-28 sm:w-32 overflow-hidden border-2 border-ink/20 hover:border-ink transition-colors"
+                          data-preview={optionVideos[o.id] ?? previews[c.id] ?? ''}
+                          data-preview-type={optionVideos[o.id] ? 'video' : 'image'}
+                          data-title={`${c.name} · ${o.label}`}
+                          aria-label={`Previsualizar ${o.label}`}
+                        >
+                          {optionVideos[o.id] ? (
+                            <video
+                              src={encodeURI(optionVideos[o.id])}
+                              class="w-full h-16 sm:h-20 object-cover pointer-events-none"
+                              autoplay
+                              muted
+                              loop
+                              playsinline
+                              preload="metadata"
+                            ></video>
+                          ) : (
+                            <img src={previews[c.id]} alt="" class="w-full h-16 sm:h-20 object-cover pointer-events-none" />
+                          )}
+                          <span class="absolute inset-0 grid place-items-center bg-ink/40 text-paper text-xs font-bold tracking-widest group-hover:bg-ink/60 transition-colors">Ver</span>
+                        </button>
+                      )}
                     </div>
                     {o.bundle && (
                       <div class="bundle-panel mt-2 border-2 border-ink/20 bg-surface p-3" data-bundle-panel={o.id} hidden>
@@ -152,13 +168,22 @@ const componentVideo = (id: string): string | undefined => {
                                 {vid && (
                                   <button
                                     type="button"
-                                    class="preview-btn border-2 border-ink/20 px-2 py-1 text-xs hover:border-ink hover:bg-ink hover:text-paper transition-colors"
+                                    class="preview-btn group relative shrink-0 w-20 h-12 overflow-hidden border-2 border-ink/20 hover:border-ink transition-colors"
                                     data-preview={vid}
                                     data-preview-type="video"
                                     data-title={comp.label}
                                     aria-label={`Previsualizar ${comp.label}`}
                                   >
-                                    Ver
+                                    <video
+                                      src={encodeURI(vid)}
+                                      class="w-full h-full object-cover pointer-events-none"
+                                      autoplay
+                                      muted
+                                      loop
+                                      playsinline
+                                      preload="metadata"
+                                    ></video>
+                                    <span class="absolute inset-0 grid place-items-center bg-ink/40 text-paper text-[10px] font-bold tracking-widest group-hover:bg-ink/60 transition-colors">Ver</span>
                                   </button>
                                 )}
                               </div>
@@ -193,7 +218,21 @@ const componentVideo = (id: string): string | undefined => {
           <div class="flex items-baseline justify-between mt-2 mb-3">
             <output id="duration-value" for="duration-slider" class="text-3xl font-bold font-mono">2:00</output>
           </div>
-          <input id="duration-slider" type="range" class="w-full accent-ink" min={DURATION.minSec} max={DURATION.maxSec} step={DURATION.stepSec} value={DURATION.defaultSec} />
+          <input id="duration-slider" type="range" class="duration-range w-full" min={DURATION.minSec} max={DURATION.maxSec} step={DURATION.stepSec} value={DURATION.defaultSec} />
+          <div class="mt-3 flex flex-wrap items-center gap-2">
+            <label for="duration-input" class="font-mono text-[10px] tracking-widest text-muted">ESCRIBIR</label>
+            <input
+              id="duration-input"
+              type="text"
+              inputmode="decimal"
+              autocomplete="off"
+              enterkeyhint="done"
+              placeholder="3:30"
+              aria-label="Escribir la duración en minutos y segundos"
+              class="w-20 border-2 border-ink/20 px-2 py-1 font-mono text-sm outline-none focus:border-ink"
+            />
+            <span class="text-[11px] text-muted">min:seg o minutos (ej. 3 o 3:30)</span>
+          </div>
           <p class="text-xs text-muted mt-2">Base 2:00. ±USD 10 por cada 30s, se suma a cada servicio. No aplica a Extras.</p>
         </div>
 
@@ -212,9 +251,9 @@ const componentVideo = (id: string): string | undefined => {
           <div class="border-2 border-ink bg-lime/20 px-4 py-3">
             <p class="font-bold text-sm">Reserva con seña</p>
             <p class="text-xs text-muted mt-1">
-              {SENA.amount === null
+              {SENA.rate === null
                 ? 'El monto de la seña se confirma por WhatsApp.'
-                : `Seña fija: USD ${money(SENA.amount)}.`}
+                : `Seña: ${Math.round(SENA.rate * 100)}% del total del pedido.`}
             </p>
           </div>
         )}

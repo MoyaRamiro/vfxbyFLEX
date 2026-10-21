@@ -21,10 +21,33 @@ import {
   type CategoryId,
   type CatalogOption,
 } from '../data/catalog';
-import { durationAdjustment, formatDuration, lineUnit, money, promoOriginal } from './pricing';
+import { durationAdjustment, durationForUnit, formatDuration, lineUnit, money, promoOriginal } from './pricing';
 import { promoActive } from './promo';
 import { buildMessage, buildWhatsAppUrl } from './whatsapp';
 import { SITE } from '../config/site';
+import { DURATION } from '../config/order';
+
+// Convierte lo que escribe el cliente ("3", "3:30", "3,5") a segundos.
+export function parseDurationInput(raw: string): number | null {
+  const value = raw.trim().toLowerCase().replace(/\s+/g, '');
+  if (!value) return null;
+  const clock = value.match(/^(\d{1,3}):([0-5]?\d)$/);
+  if (clock) return Number(clock[1]) * 60 + Number(clock[2]);
+  const decimal = value.match(/^(\d{1,3})[.,](\d{1,2})$/);
+  if (decimal) {
+    const minutes = Number(decimal[1]) + Number(decimal[2]) / Math.pow(10, decimal[2].length);
+    return Math.round(minutes * 60);
+  }
+  const minutes = value.match(/^(\d{1,3})$/);
+  if (minutes) return Number(minutes[1]) * 60;
+  return null;
+}
+
+// Ajusta al rango y al paso del slider para que barra, texto y precios coincidan.
+export function snapDuration(seconds: number): number {
+  const stepped = Math.round(seconds / DURATION.stepSec) * DURATION.stepSec;
+  return Math.min(DURATION.maxSec, Math.max(DURATION.minSec, stepped));
+}
 
 function emit(state: CartState) {
   if (typeof window === 'undefined') return;
@@ -57,7 +80,7 @@ function optionPrice(
   } else {
     unit = promo && !active ? promoOriginal(base) : base;
   }
-  return unit + (isExtra(catId) ? 0 : durationAdj);
+  return Math.max(0, unit + durationForUnit(unit, durationAdj, isExtra(catId)));
 }
 
 function applyOptionPrices(state: CartState, active: boolean) {
@@ -80,8 +103,9 @@ function applyOptionPrices(state: CartState, active: boolean) {
     const promo = promoEl?.dataset.promo === '1';
     const catId = row?.dataset.category as CategoryId | undefined;
     const base = Number(promoEl?.dataset.price || 0);
-    const dur = catId && isExtra(catId) ? 0 : durationAdj;
-    el.textContent = `USD ${money(promoOriginal(base) + dur)}`;
+    const oldUnit = promoOriginal(base);
+    const dur = durationForUnit(oldUnit, durationAdj, !!catId && isExtra(catId));
+    el.textContent = `USD ${money(oldUnit + dur)}`;
     el.style.display = promo && active ? '' : 'none';
   });
 }
@@ -122,8 +146,12 @@ export function renderConfigurator(state: CartState) {
 
   const dur = document.getElementById('duration-slider') as HTMLInputElement | null;
   const val = document.getElementById('duration-value') as HTMLOutputElement | null;
+  const durInput = document.getElementById('duration-input') as HTMLInputElement | null;
   if (dur) dur.value = String(state.durationSec);
   if (val) val.textContent = formatDuration(state.durationSec);
+  if (durInput && document.activeElement !== durInput) {
+    durInput.value = formatDuration(state.durationSec);
+  }
 
   document.querySelectorAll<HTMLButtonElement>('.mood-btn').forEach((b) => {
     const sel = b.dataset.mood === state.mood;
@@ -193,11 +221,40 @@ function applyPreset(state: CartState, preset: string): CartState {
   return next;
 }
 
+// Reproduce en bucle las previsualizaciones en línea solo mientras están
+// visibles, para no decodificar decenas de videos fuera de pantalla.
+function initPreviewVideos() {
+  const videos = Array.from(
+    document.querySelectorAll<HTMLVideoElement>('.preview-btn video, .preset-card video')
+  );
+  if (!videos.length) return;
+  for (const v of videos) {
+    v.muted = true;
+    v.loop = true;
+  }
+  if (!('IntersectionObserver' in window)) {
+    videos.forEach((v) => void v.play().catch(() => {}));
+    return;
+  }
+  const io = new IntersectionObserver(
+    (entries) => {
+      for (const entry of entries) {
+        const video = entry.target as HTMLVideoElement;
+        if (entry.isIntersecting) void video.play().catch(() => {});
+        else video.pause();
+      }
+    },
+    { threshold: 0.15 }
+  );
+  videos.forEach((v) => io.observe(v));
+}
+
 export function initConfigurator() {
   let state = loadCart();
   renderConfigurator(state);
   saveCart(state);
   emit(state);
+  initPreviewVideos();
 
   window.addEventListener(CART_EVENT, (e) => {
     state = (e as CustomEvent<CartState>).detail;
@@ -295,6 +352,35 @@ export function initConfigurator() {
     persist();
   });
 
+  const durInput = document.getElementById('duration-input') as HTMLInputElement | null;
+  if (durInput) {
+    const commit = () => {
+      const parsed = parseDurationInput(durInput.value);
+      if (parsed === null) {
+        durInput.value = formatDuration(state.durationSec);
+        return;
+      }
+      state = setDuration(state, snapDuration(parsed));
+      persist();
+      durInput.value = formatDuration(state.durationSec);
+    };
+    durInput.addEventListener('change', commit);
+    durInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        durInput.blur();
+      } else if (e.key === 'Escape') {
+        durInput.value = formatDuration(state.durationSec);
+        durInput.blur();
+      }
+    });
+    durInput.addEventListener('blur', () => {
+      const parsed = parseDurationInput(durInput.value);
+      if (parsed !== null && snapDuration(parsed) !== state.durationSec) commit();
+      else durInput.value = formatDuration(state.durationSec);
+    });
+  }
+
   document.querySelectorAll<HTMLButtonElement>('.mood-btn').forEach((b) => {
     b.addEventListener('click', () => {
       state = setMood(state, b.dataset.mood || null);
@@ -316,6 +402,7 @@ export function initConfigurator() {
         body.innerHTML = '<span class="text-muted text-sm">Sin previsualización disponible.</span>';
       } else if (isVideo) {
         body.innerHTML = `<video src="${src}" class="w-full h-full object-contain bg-ink" autoplay muted loop playsinline controls></video>`;
+        void body.querySelector('video')?.play().catch(() => {});
       } else {
         body.innerHTML = `<img src="${src}" alt="" class="w-full h-full object-cover" />`;
       }

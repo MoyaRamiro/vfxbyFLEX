@@ -1,7 +1,7 @@
-import { AUDIO_NOTE, MOODS, SENA, WHATSAPP_MODES } from '../config/order';
+import { AUDIO_NOTE, MOODS, WHATSAPP_MODES } from '../config/order';
 import { getBundle, getCategory, isBundleComplete } from '../data/catalog';
 import type { CartLine, CartState } from './cart';
-import { cartTotals, durationAdjustment, formatDuration, lineOriginal, lineTotal, money } from './pricing';
+import { cartTotals, durationAdjustment, formatDuration, lineOriginal, lineTotal, money, senaAmount } from './pricing';
 
 export function sanitizePhone(phone: string): string {
   return phone.replace(/\D/g, '');
@@ -25,7 +25,7 @@ function formatLine(line: CartLine, state: CartState, promoActive: boolean): str
   const addons = line.addons && line.addons.length > 0 ? ` + ${line.addons.map((a) => a.label).join(', ')}` : '';
   let suffix = `— USD ${money(price)}`;
   if (line.promo && promoActive && !getBundle(line.categoryId, line.optionId)) {
-    suffix += ` (30% OFF, antes USD ${money(lineOriginal(line, adj))})`;
+    suffix += ` (30% OFF, antes USD ${money(lineOriginal(line, adj, promoActive))})`;
   }
   return `• [${categoryName}] ${line.label}${entornos}${bundleSummary(line)}${addons} ${suffix}`;
 }
@@ -81,22 +81,21 @@ export function buildMessage(state: CartState, promoActive: boolean): string {
   return lines.join('\n');
 }
 
-// Short message for clients that only want to put down the fixed deposit.
+// Short message for clients that only want to pay the deposit (10% of the total).
 export function buildSenaMessage(state: CartState, promoActive: boolean): string {
   const totals = cartTotals(state, promoActive);
-  // La seña es fija (USD 20) salvo que el servicio sea más barato que la seña.
-  const amount = SENA.amount === null ? 0 : Math.min(SENA.amount, totals.total);
+  const amount = senaAmount(totals.total);
   const lines: string[] = [];
   lines.push('🎬 Seña de reserva — vfxbyflex');
   if (state.customer.instagram.trim()) {
     lines.push(`📷 Instagram: @${state.customer.instagram.trim().replace(/^@/, '')}`);
   }
   lines.push('');
-  lines.push(`💵 Seña fija: USD ${money(amount)}`);
+  lines.push(`💵 Seña (10%): USD ${money(amount)}`);
   lines.push(`⏱️ Duración: ${formatDuration(state.durationSec)}`);
   lines.push(`💰 Total del pedido: USD ${money(totals.total)}`);
   lines.push('');
-  lines.push('Quiero señar para reservar el cupo. El resto lo pago al finalizar.');
+  lines.push('Quiero señar para reservar el cupo.');
   return lines.join('\n');
 }
 
