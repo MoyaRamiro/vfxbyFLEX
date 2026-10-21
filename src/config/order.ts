@@ -22,8 +22,8 @@ export const PROMO = {
 
 export const SENA = {
   enabled: true,
-  label: 'Reservar con seña (pendiente por WhatsApp)',
-  amount: null as number | null,
+  label: 'Seña de reserva',
+  amount: 20 as number | null,
 } as const;
 
 export interface MoodOption {

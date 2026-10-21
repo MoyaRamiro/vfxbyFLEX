@@ -8,12 +8,12 @@ import {
   setMode,
   updateCustomer,
 } from './cart';
-import { cartTotals, formatDuration, lineTotal, money } from './pricing';
+import { cartTotals, durationAdjustment, formatDuration, lineTotal, money } from './pricing';
 import { promoActive } from './promo';
-import { buildMessage, buildWhatsAppUrl } from './whatsapp';
+import { buildMessage, buildSenaMessage, buildWhatsAppUrl } from './whatsapp';
 import { SITE } from '../config/site';
-import { getCategory } from '../data/catalog';
-import { type WhatsAppMode } from '../config/order';
+import { getBundle, getCategory } from '../data/catalog';
+import { SENA, type WhatsAppMode } from '../config/order';
 
 function escapeHtml(s: string): string {
   return s
@@ -74,14 +74,25 @@ export function initDrawer() {
         panel.innerHTML = state.lines
           .map((line) => {
             const cat = getCategory(line.categoryId);
-            const price = lineTotal(line, active);
+            const price = lineTotal(line, active, durationAdjustment(state.durationSec));
             const promoTag = line.promo && active ? ' <span class="text-green-700 font-mono">-30%</span>' : '';
             const entornos = line.entornos ? ` · ${line.entornos} entorno${line.entornos === 1 ? '' : 's'}` : '';
-            const addons = line.addons && line.addons.length ? ` + ${line.addons.map((a) => escapeHtml(a.label)).join(', ')}` : '';
+            const bundle = getBundle(line.categoryId, line.optionId);
+            let detail = '';
+            if (bundle) {
+              const total = bundle.length;
+              const chosen = line.components?.length ?? 0;
+              detail =
+                chosen < total
+                  ? ` · ${chosen}/${total} componentes`
+                  : ' · todos los componentes';
+            } else if (line.addons && line.addons.length) {
+              detail = ` + ${line.addons.map((a) => escapeHtml(a.label)).join(', ')}`;
+            }
             return `<div class="flex items-center justify-between gap-3 border-2 border-ink/20 p-3">
               <div class="min-w-0">
                 <p class="font-bold truncate">${escapeHtml(line.label)}</p>
-                <p class="text-xs text-muted">${escapeHtml(cat?.name ?? line.categoryId)}${entornos}${addons}${promoTag}</p>
+                <p class="text-xs text-muted">${escapeHtml(cat?.name ?? line.categoryId)}${entornos}${detail}${promoTag}</p>
               </div>
               <div class="flex items-center gap-2 shrink-0">
                 <span class="font-mono">USD ${money(price)}</span>
@@ -106,13 +117,22 @@ export function initDrawer() {
     setText('cart-subtotal', `USD ${money(totals.subtotal)}`);
     setText('cart-discount', totals.hasPromo ? `-USD ${money(totals.savings)}` : '—');
     setText('cart-total', `USD ${money(totals.total)}`);
-    const durRow = $('cart-duration-row');
-    if (durRow) {
-      const adj = totals.durationAdjustment;
-      durRow.classList.toggle('hidden', adj === 0);
-      setText('cart-duration-label', `(${formatDuration(state.durationSec)})`);
-      setText('cart-duration', `${adj > 0 ? '+' : '-'}USD ${money(Math.abs(adj))}`);
+
+    const receiptHint = $('receipt-hint');
+    if (receiptHint) receiptHint.classList.toggle('hidden', state.mode !== 'receipt');
+
+    const senaBtn = $('cart-sena') as HTMLButtonElement | null;
+    if (senaBtn) {
+      const disabled = state.lines.length === 0 || !SENA.enabled;
+      senaBtn.disabled = disabled;
+      senaBtn.classList.toggle('opacity-40', disabled);
+      senaBtn.classList.toggle('pointer-events-none', disabled);
+      // La seña nunca supera el total del pedido.
+      if (!disabled && SENA.amount !== null) {
+        senaBtn.textContent = `Señar · USD ${money(Math.min(SENA.amount, totals.total))}`;
+      }
     }
+
     document.querySelectorAll<HTMLElement>('[data-cart-count]').forEach((el) => {
       el.textContent = String(totals.count);
     });
@@ -150,6 +170,10 @@ export function initDrawer() {
     e.preventDefault();
     window.location.href = buildWhatsAppUrl(SITE.whatsapp, buildMessage(store.state, promoActive()));
   });
+  $('cart-sena')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    window.location.href = buildWhatsAppUrl(SITE.whatsapp, buildSenaMessage(store.state, promoActive()));
+  });
   const ig = $('customer-ig') as HTMLInputElement | null;
   ig?.addEventListener('input', () => {
     store.state = updateCustomer(store.state, { instagram: ig.value });
@@ -172,6 +196,9 @@ export function initDrawer() {
     store.state = (e as CustomEvent<CartState>).detail;
     render();
   });
+
+  // Los presets de "Recomendados" piden abrir el carrito tras agregar.
+  window.addEventListener('vfxbyflex:open-cart', () => open());
 
   render();
 }

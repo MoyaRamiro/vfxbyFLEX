@@ -1,5 +1,5 @@
 import { DURATION, PROMO } from '../config/order';
-import { isExtra } from '../data/catalog';
+import { getBundle, isBundleComplete, isExtra } from '../data/catalog';
 import type { CartLine, CartState } from './cart';
 
 export function round2(n: number): number {
@@ -32,59 +32,92 @@ export function lineEntornosTotal(line: CartLine): number {
   return (line.entornos ?? 0) * (line.entornoPriceEach ?? 0);
 }
 
-// The "antes" / list price (inflated original for promo items). Excludes the
-// order-level duration adjustment, which is charged once (see cartTotals).
-export function lineOriginal(line: CartLine): number {
-  const base = line.promo ? promoOriginal(line.base) : line.base;
-  return round2(base + lineAddonsTotal(line) + lineEntornosTotal(line));
+// Duration is charged on every service product (never on extras).
+export function lineDurationTotal(line: CartLine, durationAdj: number): number {
+  return isExtra(line.categoryId) ? 0 : durationAdj;
 }
 
-// Charged price of a single line, excluding the order-level duration adjustment.
-export function lineTotal(line: CartLine, promoActive: boolean): number {
-  // While the promo is live, promo items charge the discounted base; once it
-  // expires they fall back to the inflated original.
-  const unit = line.promo && !promoActive ? promoOriginal(line.base) : line.base;
-  return Math.max(0, round2(unit + lineAddonsTotal(line) + lineEntornosTotal(line)));
+// Sum of the selected components of a package at their individual prices.
+function bundlePartsSum(line: CartLine, bundle: NonNullable<ReturnType<typeof getBundle>>): number {
+  const selected = new Set(line.components ?? []);
+  return round2(bundle.filter((c) => selected.has(c.id)).reduce((sum, c) => sum + c.price, 0));
 }
 
-// Duration is charged once for the whole order (only when it has editing services).
-export function orderDurationAdjustment(state: CartState): number {
-  const hasService = state.lines.some((l) => !isExtra(l.categoryId));
-  return hasService ? durationAdjustment(state.durationSec) : 0;
+// Unit price of a line before addons/entornos/duration.
+// A complete package charges its package price (with promo when active).
+// An incomplete package loses the package discount and charges the sum of the
+// selected components at their individual, non-promo prices.
+export function lineUnit(line: CartLine, promoActive: boolean): number {
+  const bundle = getBundle(line.categoryId, line.optionId);
+  if (bundle && !isBundleComplete(line.components, bundle)) {
+    return bundlePartsSum(line, bundle);
+  }
+  return line.promo && !promoActive ? promoOriginal(line.base) : line.base;
+}
+
+export function lineTotal(line: CartLine, promoActive: boolean, durationAdj = 0): number {
+  return Math.max(
+    0,
+    round2(
+      lineUnit(line, promoActive) +
+        lineAddonsTotal(line) +
+        lineEntornosTotal(line) +
+        lineDurationTotal(line, durationAdj)
+    )
+  );
+}
+
+// The "antes" / list price. Duration is applied here too so the promo delta
+// (the visible saving) stays constant regardless of the chosen length.
+export function lineOriginal(line: CartLine, durationAdj = 0): number {
+  const bundle = getBundle(line.categoryId, line.optionId);
+  const base =
+    bundle && !isBundleComplete(line.components, bundle)
+      ? bundlePartsSum(line, bundle)
+      : line.promo
+        ? promoOriginal(line.base)
+        : line.base;
+  return round2(
+    base + lineAddonsTotal(line) + lineEntornosTotal(line) + lineDurationTotal(line, durationAdj)
+  );
 }
 
 export interface CartTotals {
   subtotal: number;
-  durationAdjustment: number;
-  discount: number;
   total: number;
   savings: number;
+  discount: number;
   count: number;
   hasPromo: boolean;
+  durationAdjustment: number;
 }
 
 export function cartTotals(state: CartState, promoActive: boolean): CartTotals {
+  const durationAdj = durationAdjustment(state.durationSec);
   let original = 0;
   let total = 0;
-  let discount = 0;
+  let savings = 0;
   let hasPromo = false;
   for (const line of state.lines) {
-    original += lineOriginal(line);
-    total += lineTotal(line, promoActive);
-    if (line.promo && promoActive && line.base > 0) {
-      discount += promoOriginal(line.base) - line.base;
+    const before = lineOriginal(line, durationAdj);
+    const now = lineTotal(line, promoActive, durationAdj);
+    original += before;
+    total += now;
+    if (before > now) {
+      savings += before - now;
       hasPromo = true;
     }
   }
-  const adjustment = orderDurationAdjustment(state);
   return {
     subtotal: round2(original),
-    durationAdjustment: round2(adjustment),
-    discount: round2(discount),
-    total: round2(Math.max(0, total + adjustment)),
-    savings: round2(discount),
+    total: round2(Math.max(0, total)),
+    savings: round2(savings),
+    discount: round2(savings),
     count: state.lines.length,
     hasPromo,
+    durationAdjustment: round2(
+      state.lines.reduce((sum, l) => sum + lineDurationTotal(l, durationAdj), 0)
+    ),
   };
 }
 

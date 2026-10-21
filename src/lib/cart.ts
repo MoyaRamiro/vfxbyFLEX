@@ -21,6 +21,8 @@ export interface CartLine {
   entornos?: number;
   entornoPriceEach?: number;
   addons?: CartAddon[];
+  // Selected components of a package (bundle). undefined = not a package.
+  components?: string[];
 }
 
 export interface CustomerInfo {
@@ -89,6 +91,14 @@ export function setEntornos(state: CartState, key: string, entornos: number, ent
     lines: state.lines.map((l) =>
       l.key === key ? { ...l, entornos, entornoPriceEach: entornoPriceEach ?? l.entornoPriceEach } : l
     ),
+  };
+}
+
+// Replace the selected components of a package line.
+export function setComponents(state: CartState, key: string, components: string[]): CartState {
+  return {
+    ...state,
+    lines: state.lines.map((l) => (l.key === key ? { ...l, components } : l)),
   };
 }
 

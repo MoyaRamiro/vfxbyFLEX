@@ -1,6 +1,9 @@
 ---
+import { SITE } from '../config/site';
+
 const TITLE = 'VFX';
 const SLOGAN = 'Animaciones y efectos que le dan movimiento a tus ideas.';
+const REVIEWS_URL = `${SITE.instagramUrl}highlights/`;
 ---
 
 <header class="px-6 md:px-10 py-10 bg-paper border-b-2 border-ink">
@@ -31,20 +34,22 @@ const SLOGAN = 'Animaciones y efectos que le dan movimiento a tus ideas.';
           <a href="#trabajos" class="border-2 border-ink px-5 py-3 font-bold hover:bg-ink hover:text-paper transition-colors">Ver trabajos</a>
         </div>
       </div>
-      <div class="w-full lg:w-80 flex flex-col gap-3 text-sm">
-        <div class="border-2 border-ink p-4">
-          <p class="font-mono text-xs text-muted">DISEÑADO PARA VELOCIDAD</p>
-          <p class="mt-1 font-medium">Pedido en 1 minuto, sin formularios largos.</p>
-        </div>
-        <div class="border-2 border-ink p-4">
-          <p class="font-mono text-xs text-muted">PRECIO CLARO</p>
-          <p class="mt-1 font-medium">Precios en USD. Descuento 30% SOLO POR HOY.</p>
-        </div>
-        <div class="border-2 border-ink p-4">
-          <p class="font-mono text-xs text-muted">ENTREGA DIRECTA</p>
-          <p class="mt-1 font-medium">Se envía por WhatsApp con 2 modos de respuesta.</p>
-        </div>
-      </div>
+      <a
+        href={REVIEWS_URL}
+        target="_blank"
+        rel="noopener noreferrer"
+        class="w-full lg:w-80 flex flex-col gap-2 border-2 border-ink p-4 hover:bg-lime/10 transition-colors"
+      >
+        <span class="flex items-center gap-1 text-lime" aria-label="5 de 5 estrellas">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l2.9 6.3 6.9.8-5.1 4.7 1.4 6.8L12 17.3 5.9 20.6l1.4-6.8L2.2 9.1l6.9-.8L12 2z"/></svg>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l2.9 6.3 6.9.8-5.1 4.7 1.4 6.8L12 17.3 5.9 20.6l1.4-6.8L2.2 9.1l6.9-.8L12 2z"/></svg>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l2.9 6.3 6.9.8-5.1 4.7 1.4 6.8L12 17.3 5.9 20.6l1.4-6.8L2.2 9.1l6.9-.8L12 2z"/></svg>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l2.9 6.3 6.9.8-5.1 4.7 1.4 6.8L12 17.3 5.9 20.6l1.4-6.8L2.2 9.1l6.9-.8L12 2z"/></svg>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l2.9 6.3 6.9.8-5.1 4.7 1.4 6.8L12 17.3 5.9 20.6l1.4-6.8L2.2 9.1l6.9-.8L12 2z"/></svg>
+        </span>
+        <p class="mt-1 font-bold">Recomendado por muchos artistas</p>
+        <p class="text-xs text-muted">Mirá las reseñas en historias destacadas de Instagram.</p>
+      </a>
     </div>
   </div>
 </header>

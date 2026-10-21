@@ -1,12 +1,21 @@
 ---
+interface Props {
+  // Cuando tengas el video, pasalo acá (ej: <Marquee video="/marquee.mp4" />).
+  video?: string;
+}
+const { video } = Astro.props;
 const words = ['VFX', 'VISUALIZERS', 'CROMA', 'MONTAJE', 'REELS', 'PORTADAS', 'GLITCHES', 'ROTO', 'IA 3D'];
 const strip = [...words, ...words];
 ---
 
 <div class="border-y-2 border-ink bg-lime overflow-hidden py-3" aria-hidden="true">
-  <div class="animate-marquee flex w-max gap-10 whitespace-nowrap font-bold text-xl">
-    {strip.map((w) => (
-      <span class="flex items-center gap-10">{w}<span class="text-cyan">✦</span></span>
-    ))}
-  </div>
+  {video ? (
+    <video class="w-full h-16 object-cover" src={video} autoplay muted loop playsinline></video>
+  ) : (
+    <div class="animate-marquee flex w-max gap-10 whitespace-nowrap font-bold text-xl">
+      {strip.map((w) => (
+        <span class="flex items-center gap-10">{w}<span class="text-cyan">✦</span></span>
+      ))}
+    </div>
+  )}
 </div>

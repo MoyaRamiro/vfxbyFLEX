@@ -13,6 +13,31 @@ const previews: Record<string, string> = {
   vfx: vfxPro.src,
   montaje: montaje.src,
 };
+
+// Ejemplos en video por opción (public/videos).
+const optionVideos: Record<string, string> = {
+  'croma-25d-3d': '/videos/croma 2.5D y 3D.webm',
+  'croma-mezclado': '/videos/croma-mezclado-3d-y-normales.webm',
+  'croma-video-full': '/videos/croma fondo blanco y vfx full.webm',
+  'croma-2d': '/videos/croma 2D sin profundidad.webm',
+  'vfx-basico': '/videos/vfx basico.webm',
+  'vfx-pro': '/videos/vfx-pro.webm',
+  'vfx-full': '/videos/vfx-full.webm',
+  'montaje-montaje': '/videos/montage.webm',
+  'montaje-transiciones': '/videos/transiciones.webm',
+  'visual-only-lyrics': '/videos/visuales.webm',
+  'visual-lyrics-pro': '/videos/visual-full.webm',
+  'visual-25d-imagen': '/videos/visual-full.webm',
+};
+
+// Ejemplos por componente de los paquetes VFX (según el sufijo del id).
+const componentVideo = (id: string): string | undefined => {
+  if (id.endsWith('-transiciones')) return '/videos/transiciones.webm';
+  if (id.endsWith('-camaras')) return '/videos/camaras lentas.webm';
+  if (id.endsWith('-titulo')) return '/videos/titulo.webm';
+  if (id.endsWith('-rotoscopia')) return '/videos/rotoscopias.webm';
+  return undefined;
+};
 ---
 
 <section id="servicios" class="px-6 md:px-10 py-24 md:py-32 bg-surface">
@@ -68,6 +93,7 @@ const previews: Record<string, string> = {
                 <legend class="font-mono text-xs tracking-widest text-muted mb-3">{g.name.toUpperCase()}</legend>
                 <div class="flex flex-col gap-3" role={g.kind === 'single' ? 'radiogroup' : 'group'} aria-label={`${c.name} — ${g.name}`}>
                   {g.options.map((o) => (
+                    <div class="option-item" data-option-item={o.id}>
                     <div class="option-row flex items-stretch gap-2" data-option-row={o.id}>
                       <button
                         type="button"
@@ -102,12 +128,45 @@ const previews: Record<string, string> = {
                       <button
                         type="button"
                         class="preview-btn border-2 border-ink/20 px-3 text-sm hover:border-ink hover:bg-ink hover:text-paper transition-colors"
-                        data-preview={previews[c.id] ?? ''}
+                        data-preview={optionVideos[o.id] ?? previews[c.id] ?? ''}
+                        data-preview-type={optionVideos[o.id] ? 'video' : 'image'}
                         data-title={`${c.name} · ${o.label}`}
                         aria-label={`Previsualizar ${o.label}`}
                       >
                         Ver
                       </button>
+                    </div>
+                    {o.bundle && (
+                      <div class="bundle-panel mt-2 border-2 border-ink/20 bg-surface p-3" data-bundle-panel={o.id} hidden>
+                        <p class="font-mono text-[10px] tracking-widest text-muted mb-2">COMPONENTES INCLUIDOS · quitá los que no quieras</p>
+                        <div class="flex flex-col gap-1.5">
+                          {o.bundle.map((comp) => {
+                            const vid = componentVideo(comp.id);
+                            return (
+                              <div class="flex items-center gap-2 text-sm">
+                                <label class="flex items-center gap-2 cursor-pointer flex-1">
+                                  <input type="checkbox" class="bundle-check accent-ink w-4 h-4" data-component={comp.id} checked />
+                                  <span class="flex-1">{comp.label}</span>
+                                  <span class="font-mono text-xs text-muted">USD {money(comp.price)}</span>
+                                </label>
+                                {vid && (
+                                  <button
+                                    type="button"
+                                    class="preview-btn border-2 border-ink/20 px-2 py-1 text-xs hover:border-ink hover:bg-ink hover:text-paper transition-colors"
+                                    data-preview={vid}
+                                    data-preview-type="video"
+                                    data-title={comp.label}
+                                    aria-label={`Previsualizar ${comp.label}`}
+                                  >
+                                    Ver
+                                  </button>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
                     </div>
                   ))}
                 </div>
@@ -133,10 +192,9 @@ const previews: Record<string, string> = {
           <label for="duration-slider" class="font-mono text-xs tracking-widest text-muted">DURACIÓN</label>
           <div class="flex items-baseline justify-between mt-2 mb-3">
             <output id="duration-value" for="duration-slider" class="text-3xl font-bold font-mono">2:00</output>
-            <span id="duration-adjust" class="text-sm text-muted font-mono">USD +0</span>
           </div>
           <input id="duration-slider" type="range" class="w-full accent-ink" min={DURATION.minSec} max={DURATION.maxSec} step={DURATION.stepSec} value={DURATION.defaultSec} />
-          <p class="text-xs text-muted mt-2">Base 2:00. ±USD 10 por cada 30s. No aplica a Extras.</p>
+          <p class="text-xs text-muted mt-2">Base 2:00. ±USD 10 por cada 30s, se suma a cada servicio. No aplica a Extras.</p>
         </div>
 
         <div>
@@ -154,7 +212,9 @@ const previews: Record<string, string> = {
           <div class="border-2 border-ink bg-lime/20 px-4 py-3">
             <p class="font-bold text-sm">Reserva con seña</p>
             <p class="text-xs text-muted mt-1">
-              {SENA.amount === null ? 'El monto de la seña se confirma por WhatsApp.' : `Monto: USD ${money(SENA.amount)}`}
+              {SENA.amount === null
+                ? 'El monto de la seña se confirma por WhatsApp.'
+                : `Seña fija: USD ${money(SENA.amount)}.`}
             </p>
           </div>
         )}

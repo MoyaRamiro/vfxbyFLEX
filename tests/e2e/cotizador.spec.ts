@@ -14,6 +14,7 @@ test('promo banner stays visible with a live countdown', async ({ page }) => {
 
 test('selecting a service updates the cart total', async ({ page }) => {
   await page.goto('/');
+  await page.locator('.cat-tab[data-category="visual"]').click();
   await page.locator('.option-btn[data-option="visual-only-lyrics"]').click();
   await page.locator('.cart-trigger').first().click();
   await expect(page.locator('#cart-total')).toContainText('57');
@@ -21,6 +22,7 @@ test('selecting a service updates the cart total', async ({ page }) => {
 
 test('promo item shows discounted price and original struck through', async ({ page }) => {
   await page.goto('/');
+  await page.locator('.cat-tab[data-category="visual"]').click();
   await page.locator('.option-btn[data-option="visual-25d-imagen"]').click();
   await page.locator('.cart-trigger').first().click();
   // Discounted base price is charged
@@ -30,38 +32,60 @@ test('promo item shows discounted price and original struck through', async ({ p
   await expect(page.locator('#cart-discount')).toContainText('19');
 });
 
-test('removing items clears selection and does not re-add siblings', async ({ page }) => {
+test('bundle package expands, is deselectable component by component, and prices change', async ({ page }) => {
   await page.goto('/');
   await page.locator('.cat-tab[data-category="vfx"]').click();
 
   const pkg = page.locator('.option-btn[data-option="vfx-full"]');
-  const cam = page.locator('.option-btn[data-option="vfx-full-camaras"]');
-  const tit = page.locator('.option-btn[data-option="vfx-full-titulo"]');
+  const panel = page.locator('.bundle-panel[data-bundle-panel="vfx-full"]');
+  const camaras = page.locator('.bundle-check[data-component="vfx-full-camaras"]');
 
-  await pkg.click(); // reveals the complementos group
-  await cam.click();
-  await tit.click();
-  await expect(cam).toHaveAttribute('aria-pressed', 'true');
-  await expect(tit).toHaveAttribute('aria-pressed', 'true');
+  await expect(panel).toBeHidden();
+  await pkg.click();
+  await expect(panel).toBeVisible();
+  await expect(camaras).toBeChecked();
+  await expect(page.locator('.option-now[data-price="199"]')).toContainText('199');
 
-  await page.locator('.cart-trigger').first().click();
-  await page.locator('.remove-line[data-key="vfx:vfx-full-camaras"]').click();
-  await page.locator('.remove-line[data-key="vfx:vfx-full-titulo"]').click();
-  await page.locator('#cart-close').click();
-
-  // Regression: selection must clear after removal (used to stay black/stale)
-  await expect(cam).toHaveAttribute('aria-pressed', 'false');
-  await expect(tit).toHaveAttribute('aria-pressed', 'false');
-  await expect(pkg).toHaveAttribute('aria-checked', 'true');
-
-  // Re-selecting one must not drag its sibling back into the cart
-  await cam.click();
-  await expect(cam).toHaveAttribute('aria-pressed', 'true');
-  await expect(tit).toHaveAttribute('aria-pressed', 'false');
-  await expect(page.locator('[data-cart-count]').first()).toHaveText('2');
+  // Unchecking a component drops the package price to the suelto sum (199 - 15 = 184? no, suelto sum)
+  await camaras.uncheck();
+  const partial = 10 + 45 + 20 + 65 + 20 + 20 + 10; // 190 suelto (sin cámaras)
+  await expect(page.locator('.option-now[data-price="199"]')).toContainText(String(partial));
 
   await page.locator('.cart-trigger').first().click();
-  const rows = page.locator('.remove-line');
-  await expect(rows).toHaveCount(2); // package + camaras only
-  await expect(page.locator('#cart-total')).toContainText('214');
+  await expect(page.locator('#cart-total')).toContainText(String(partial));
+});
+
+test('duration is applied per product, not once per order', async ({ page }) => {
+  await page.goto('/');
+  await page.locator('.cat-tab[data-category="visual"]').click();
+  await page.locator('.option-btn[data-option="visual-only-lyrics"]').click();
+  await page.locator('.cat-tab[data-category="vfx"]').click();
+  await page.locator('.option-btn[data-option="vfx-full"]').click();
+
+  // 3:30 → +30 on each of the 2 services
+  await page.locator('#duration-slider').evaluate((el) => {
+    (el as HTMLInputElement).value = '210';
+    el.dispatchEvent(new Event('input', { bubbles: true }));
+  });
+
+  await page.locator('.cart-trigger').first().click();
+  // vfx-full 199→229 + Only Lyrics 57→87 = 316
+  await expect(page.locator('#cart-total')).toContainText('316');
+});
+
+test('preset card pre-arms the order and opens the drawer', async ({ page }) => {
+  await page.goto('/');
+  await page.locator('.preset-card[data-preset="visual-25d"]').click();
+  await expect(page.locator('#cart-drawer')).toHaveAttribute('aria-hidden', 'false');
+  await expect(page.locator('#cart-total')).toContainText('45');
+});
+
+test('preview opens the matching webm video', async ({ page }) => {
+  await page.goto('/');
+  await page.locator('.cat-tab[data-category="vfx"]').click();
+  // Open the VFX Full package preview ("Ver" next to the option).
+  await page.locator('.option-btn[data-option="vfx-full"]').locator('xpath=following-sibling::button[contains(@class,"preview-btn")]').click();
+  const video = page.locator('#preview-body video');
+  await expect(video).toHaveAttribute('src', /vfx-full\.webm/);
+  await expect(page.locator('#preview-modal')).not.toHaveClass(/hidden/);
 });

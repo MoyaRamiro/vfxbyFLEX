@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { emptyCart, toggleLine, lineKey, setDuration, setSena, setMode, setMood } from '../src/lib/cart';
-import { cartTotals, durationAdjustment, lineTotal, formatDuration, promoOriginal } from '../src/lib/pricing';
+import { cartTotals, durationAdjustment, lineTotal, lineUnit, lineOriginal, formatDuration, promoOriginal } from '../src/lib/pricing';
 import { promoActive, promoRemaining, formatCountdown } from '../src/lib/promo';
 
 describe('cart', () => {
@@ -47,5 +47,49 @@ describe('cart', () => {
     const remaining = promoRemaining(new Date('2020-01-01T12:00:00'));
     expect(remaining).toBeGreaterThan(0);
     expect(remaining).toBeLessThanOrEqual(24 * 60 * 60 * 1000);
+  });
+
+  describe('bundles', () => {
+    const fullComponents = [
+      'vfx-full-idea', 'vfx-full-transiciones', 'vfx-full-camaras', 'vfx-full-titulo',
+      'vfx-full-rotoscopia', 'vfx-full-ia', 'vfx-full-3d', 'vfx-full-composicion',
+    ];
+    const fullLine = (components: string[]) => ({
+      key: 'vfx:vfx-paquete', categoryId: 'vfx' as const, groupId: 'vfx-paquete',
+      optionId: 'vfx-full', label: 'VFX Full', base: 199, promo: true, components,
+    });
+
+    it('complete package charges the package price (199) with promo active', () => {
+      const line = fullLine(fullComponents);
+      expect(lineUnit(line, true)).toBe(199);
+      expect(lineTotal(line, true)).toBe(199);
+    });
+
+    it('incomplete package charges the sum of selected components at suelto prices', () => {
+      // Deselect camaras (15) and composicion (10) → 199 - 25 = 174 of components
+      const partial = fullComponents.filter((c) => c !== 'vfx-full-camaras' && c !== 'vfx-full-composicion');
+      const line = fullLine(partial);
+      expect(lineUnit(line, true)).toBe(10 + 45 + 20 + 65 + 20 + 20);
+      expect(lineTotal(line, true)).toBe(180);
+    });
+
+    it('complete package original price is the inflated one (no suelto mix)', () => {
+      const line = fullLine(fullComponents);
+      expect(lineOriginal(line)).toBe(Math.round(199 / 0.7));
+    });
+
+    it('duration applies per product line, not once per order', () => {
+      let c = emptyCart();
+      c = setDuration(c, 150); // +10
+      c = toggleLine(c, fullLine(fullComponents) as any, true);
+      c = toggleLine(c, {
+        key: 'visual:visual-tipo', categoryId: 'visual', groupId: 'visual-tipo',
+        optionId: 'visual-25d-imagen', label: 'Visual 2.5D', base: 45, promo: true,
+      } as any, true);
+      const t = cartTotals(c, true);
+      // +10 on VFX Full (199→209) and +10 on Visual (45→55)
+      expect(t.durationAdjustment).toBe(20);
+      expect(t.total).toBe(209 + 55);
+    });
   });
 });

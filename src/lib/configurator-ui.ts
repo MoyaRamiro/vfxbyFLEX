@@ -7,13 +7,21 @@ import {
   toggleLine,
   setDuration,
   setMood,
-  setSena,
   setEntornos,
+  setComponents,
   isSelected,
   lineKey,
 } from './cart';
-import { getGroup, type CategoryId } from '../data/catalog';
-import { durationAdjustment, formatDuration, money, promoOriginal } from './pricing';
+import {
+  getGroup,
+  getBundle,
+  groupOfOption,
+  isExtra,
+  getCategory,
+  type CategoryId,
+  type CatalogOption,
+} from '../data/catalog';
+import { durationAdjustment, formatDuration, lineUnit, money, promoOriginal } from './pricing';
 import { promoActive } from './promo';
 import { buildMessage, buildWhatsAppUrl } from './whatsapp';
 import { SITE } from '../config/site';
@@ -31,20 +39,63 @@ function setSelected(btn: HTMLButtonElement, selected: boolean, single: boolean)
   btn.classList.toggle('border-ink', selected);
 }
 
-function applyOptionPrices(active: boolean) {
+// Live price of an option row: package logic + per-product duration.
+function optionPrice(
+  state: CartState,
+  catId: CategoryId,
+  optionId: string,
+  base: number,
+  promo: boolean,
+  durationAdj: number
+): number {
+  const active = promoActive();
+  const line = state.lines.find((l) => l.categoryId === catId && l.optionId === optionId);
+  const bundle = getBundle(catId, optionId);
+  let unit: number;
+  if (line && bundle) {
+    unit = lineUnit(line, active);
+  } else {
+    unit = promo && !active ? promoOriginal(base) : base;
+  }
+  return unit + (isExtra(catId) ? 0 : durationAdj);
+}
+
+function applyOptionPrices(state: CartState, active: boolean) {
+  const durationAdj = durationAdjustment(state.durationSec);
+
   document.querySelectorAll<HTMLElement>('.option-now').forEach((el) => {
+    const btn = el.closest<HTMLElement>('.option-btn');
+    const catId = btn?.dataset.category as CategoryId | undefined;
+    const optionId = btn?.dataset.option || '';
+    if (!catId) return;
     const base = Number(el.dataset.price || 0);
     const promo = el.dataset.promo === '1';
-    const shown = promo && !active ? promoOriginal(base) : base;
+    const shown = optionPrice(state, catId, optionId, base, promo, durationAdj);
     el.textContent = `USD ${money(shown)}`;
   });
+
   document.querySelectorAll<HTMLElement>('.option-old').forEach((el) => {
     const row = el.closest('.option-btn') as HTMLElement | null;
     const promoEl = row?.querySelector<HTMLElement>('.option-now');
     const promo = promoEl?.dataset.promo === '1';
+    const catId = row?.dataset.category as CategoryId | undefined;
     const base = Number(promoEl?.dataset.price || 0);
-    el.textContent = `USD ${money(promoOriginal(base))}`;
+    const dur = catId && isExtra(catId) ? 0 : durationAdj;
+    el.textContent = `USD ${money(promoOriginal(base) + dur)}`;
     el.style.display = promo && active ? '' : 'none';
+  });
+}
+
+function renderBundles(state: CartState) {
+  document.querySelectorAll<HTMLElement>('.bundle-panel').forEach((panel) => {
+    const optionId = panel.dataset.bundlePanel || '';
+    const catId = panel.closest<HTMLElement>('.cat-panel')?.dataset.panel as CategoryId | undefined;
+    if (!catId) return;
+    const line = state.lines.find((l) => l.categoryId === catId && l.optionId === optionId);
+    panel.hidden = !line;
+    panel.querySelectorAll<HTMLInputElement>('.bundle-check').forEach((chk) => {
+      chk.checked = !!line?.components?.includes(chk.dataset.component || '');
+    });
   });
 }
 
@@ -71,13 +122,8 @@ export function renderConfigurator(state: CartState) {
 
   const dur = document.getElementById('duration-slider') as HTMLInputElement | null;
   const val = document.getElementById('duration-value') as HTMLOutputElement | null;
-  const adj = document.getElementById('duration-adjust') as HTMLElement | null;
   if (dur) dur.value = String(state.durationSec);
   if (val) val.textContent = formatDuration(state.durationSec);
-  if (adj) {
-    const a = durationAdjustment(state.durationSec);
-    adj.textContent = a === 0 ? 'USD +0' : a > 0 ? `USD +${money(a)}` : `USD ${money(a)}`;
-  }
 
   document.querySelectorAll<HTMLButtonElement>('.mood-btn').forEach((b) => {
     const sel = b.dataset.mood === state.mood;
@@ -87,9 +133,6 @@ export function renderConfigurator(state: CartState) {
     b.classList.toggle('border-ink', sel);
   });
 
-  const senaEl = document.getElementById('sena-toggle') as HTMLInputElement | null;
-  if (senaEl) senaEl.checked = state.sena;
-
   document.querySelectorAll<HTMLElement>('.cat-panel').forEach((panel) => {
     const catId = panel.dataset.panel as CategoryId | undefined;
     const select = panel.querySelector<HTMLSelectElement>('.entornos-select');
@@ -98,10 +141,56 @@ export function renderConfigurator(state: CartState) {
     select.value = String(line?.entornos ?? Number(select.dataset.default || select.value));
   });
 
-  applyOptionPrices(active);
+  renderBundles(state);
+  applyOptionPrices(state, active);
 
   const wa = document.getElementById('wa-cta') as HTMLAnchorElement | null;
   if (wa) wa.href = buildWhatsAppUrl(SITE.whatsapp, buildMessage(state, active));
+}
+
+function lineFromOption(
+  catId: CategoryId,
+  groupId: string,
+  option: CatalogOption,
+  kind: 'single' | 'multi'
+): CartLine {
+  const bundle = getBundle(catId, option.id);
+  return {
+    key: lineKey(catId, groupId, option.id, kind),
+    categoryId: catId,
+    groupId,
+    optionId: option.id,
+    label: option.label,
+    base: option.price,
+    promo: option.promo === true,
+    components: bundle ? bundle.map((c) => c.id) : undefined,
+  };
+}
+
+// Recomendados cards: armá un pedido pre-armado de un golpe.
+function applyPreset(state: CartState, preset: string): CartState {
+  let next = state;
+  if (preset === 'croma-full-4') {
+    const cat = getCategory('croma');
+    const opt = cat?.groups[0]?.options.find((o) => o.id === 'croma-video-full');
+    const groupId = cat?.groups[0]?.id ?? 'croma-modalidad';
+    if (opt) {
+      next = toggleLine(next, lineFromOption('croma', groupId, opt, 'single'), true);
+      const line = next.lines.find((l) => l.categoryId === 'croma');
+      if (line) next = setEntornos(next, line.key, 4, cat?.entornos?.priceEach ?? 10);
+    }
+  } else if (preset === 'vfx-full-all') {
+    const cat = getCategory('vfx');
+    const opt = cat?.groups[0]?.options.find((o) => o.id === 'vfx-full');
+    const groupId = cat?.groups[0]?.id ?? 'vfx-paquete';
+    if (opt) next = toggleLine(next, lineFromOption('vfx', groupId, opt, 'single'), true);
+  } else if (preset === 'visual-25d') {
+    const cat = getCategory('visual');
+    const opt = cat?.groups[0]?.options.find((o) => o.id === 'visual-25d-imagen');
+    const groupId = cat?.groups[0]?.id ?? 'visual-tipo';
+    if (opt) next = toggleLine(next, lineFromOption('visual', groupId, opt, 'single'), true);
+  }
+  return next;
 }
 
 export function initConfigurator() {
@@ -137,6 +226,7 @@ export function initConfigurator() {
       const group = getGroup(catId, groupId);
       if (!group) return;
       const single = group.kind === 'single';
+      const bundle = getBundle(catId, optionId);
       const line: CartLine = {
         key: lineKey(catId, groupId, optionId, group.kind),
         categoryId: catId,
@@ -145,6 +235,8 @@ export function initConfigurator() {
         label: btn.dataset.label || '',
         base: Number(btn.dataset.price || 0),
         promo: btn.dataset.promo === '1',
+        // Selecting a package pre-selects every component it includes.
+        components: bundle ? bundle.map((c) => c.id) : undefined,
       };
       state = toggleLine(state, line, single);
 
@@ -153,6 +245,33 @@ export function initConfigurator() {
       if (select && isSelected(state, { categoryId: catId, groupId, optionId })) {
         const count = Number(select.value);
         state = setEntornos(state, line.key, count, count > 0 ? 10 : 0);
+      }
+      persist();
+    });
+  });
+
+  // Deselect individual components of a package without leaving the package.
+  document.querySelectorAll<HTMLInputElement>('.bundle-check').forEach((chk) => {
+    chk.addEventListener('change', () => {
+      const panel = chk.closest<HTMLElement>('.bundle-panel');
+      const optionId = panel?.dataset.bundlePanel || '';
+      const catId = panel?.closest<HTMLElement>('.cat-panel')?.dataset.panel as CategoryId | undefined;
+      if (!catId) return;
+      const bundle = getBundle(catId, optionId);
+      if (!bundle) return;
+      const groupId = groupOfOption(catId, optionId)?.id ?? '';
+      const key = lineKey(catId, groupId, optionId, 'single');
+      const line = state.lines.find((l) => l.key === key);
+      if (!line) return;
+      const selected = new Set(line.components ?? []);
+      if (chk.checked) selected.add(chk.dataset.component || '');
+      else selected.delete(chk.dataset.component || '');
+      const next = bundle.filter((c) => selected.has(c.id)).map((c) => c.id);
+      // Unchecking every component removes the package from the order.
+      if (next.length === 0) {
+        state = toggleLine(state, line, true);
+      } else {
+        state = setComponents(state, key, next);
       }
       persist();
     });
@@ -183,27 +302,30 @@ export function initConfigurator() {
     });
   });
 
-  const senaEl = document.getElementById('sena-toggle') as HTMLInputElement | null;
-  senaEl?.addEventListener('change', () => {
-    state = setSena(state, senaEl.checked);
-    persist();
-  });
-
   const modal = document.getElementById('preview-modal');
   const title = document.getElementById('preview-title');
   const body = document.getElementById('preview-body');
   document.querySelectorAll<HTMLButtonElement>('.preview-btn').forEach((btn) => {
     btn.addEventListener('click', () => {
       if (!modal || !title || !body) return;
-      const src = btn.dataset.preview || '';
+      const raw = btn.dataset.preview || '';
+      const src = raw ? encodeURI(raw) : '';
+      const isVideo = btn.dataset.previewType === 'video' || /\.webm$/i.test(raw);
       title.textContent = btn.dataset.title || '';
-      body.innerHTML = src
-        ? `<img src="${src}" alt="" class="w-full h-full object-cover" />`
-        : '<span class="text-muted text-sm">Sin previsualización disponible.</span>';
+      if (!src) {
+        body.innerHTML = '<span class="text-muted text-sm">Sin previsualización disponible.</span>';
+      } else if (isVideo) {
+        body.innerHTML = `<video src="${src}" class="w-full h-full object-contain bg-ink" autoplay muted loop playsinline controls></video>`;
+      } else {
+        body.innerHTML = `<img src="${src}" alt="" class="w-full h-full object-cover" />`;
+      }
       modal.classList.remove('hidden');
     });
   });
-  const closePreview = () => modal?.classList.add('hidden');
+  const closePreview = () => {
+    modal?.classList.add('hidden');
+    if (body) body.innerHTML = '';
+  };
   document.getElementById('preview-close')?.addEventListener('click', closePreview);
   document.getElementById('preview-backdrop')?.addEventListener('click', closePreview);
   document.addEventListener('keydown', (e) => {
@@ -215,4 +337,15 @@ export function initConfigurator() {
     renderConfigurator(state);
     emit(state);
   }
+
+  // Recomendados: un clic arma el pedido y abre el carrito.
+  document.querySelectorAll<HTMLButtonElement>('.preset-card').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const preset = btn.dataset.preset || '';
+      if (!preset) return;
+      state = applyPreset(state, preset);
+      persist();
+      window.dispatchEvent(new CustomEvent('vfxbyflex:open-cart'));
+    });
+  });
 }

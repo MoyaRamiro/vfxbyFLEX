@@ -1,17 +1,31 @@
 ---
-import { getCollection } from 'astro:content';
-import type { CollectionEntry } from 'astro:content';
 import { Image } from 'astro:assets';
-import visualizer from '../assets/projects/visualizer.png';
+import visual25d from '../assets/projects/visualizer.png';
 import croma from '../assets/projects/croma.png';
 import vfxPro from '../assets/projects/vfx-pro.png';
-import montaje from '../assets/projects/montaje.png';
 
-const projects: Array<{ title: string; tags: string[]; href: string; image: ImageMetadata; }> = [
-  { title: 'Visualizer', tags: ['Visual'], href: '#servicios', image: visualizer },
-  { title: 'Croma', tags: ['Croma', '3D'], href: '#servicios', image: croma },
-  { title: 'VFX Pro', tags: ['VFX'], href: '#servicios', image: vfxPro },
-  { title: 'Montaje', tags: ['Montaje', 'Color'], href: '#servicios', image: montaje },
+const cards = [
+  {
+    preset: 'croma-full-4',
+    title: 'Croma Full · 4 entornos',
+    tags: ['Croma', '3D'],
+    note: 'Armado con los 4 entornos incluidos.',
+    image: croma,
+  },
+  {
+    preset: 'vfx-full-all',
+    title: 'VFX Full',
+    tags: ['VFX'],
+    note: 'Todos los componentes del paquete.',
+    image: vfxPro,
+  },
+  {
+    preset: 'visual-25d',
+    title: 'Visual con imagen 2.5D',
+    tags: ['Visual'],
+    note: 'Una imagen en movimiento 2.5D.',
+    image: visual25d,
+  },
 ];
 ---
 
@@ -20,24 +34,30 @@ const projects: Array<{ title: string; tags: string[]; href: string; image: Imag
     <div class="flex flex-wrap items-end justify-between gap-4 mb-8">
       <div>
         <span class="font-mono text-xs tracking-widest text-muted">RECOMENDADOS</span>
-        <h2 class="text-3xl md:text-5xl font-bold mt-2">Recomendados para arrancar</h2>
+        <h2 class="text-3xl md:text-5xl font-bold mt-2">Lo que más piden mis clientes</h2>
       </div>
     </div>
-    <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-      {projects.map((p) => (
-        <a href={p.href} class="group flex flex-col border-2 border-ink bg-paper overflow-hidden hover:bg-lime/10 transition-colors">
+    <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      {cards.map((p) => (
+        <button
+          type="button"
+          class="preset-card group flex flex-col border-2 border-ink bg-paper overflow-hidden hover:bg-lime/10 transition-colors text-left"
+          data-preset={p.preset}
+        >
           <div class="aspect-video overflow-hidden">
             <Image src={p.image} alt={p.title} class="w-full h-full object-cover object-center group-hover:scale-[1.03] transition-transform duration-300" loading="lazy" />
           </div>
           <div class="p-4 border-t-2 border-ink flex flex-col gap-2">
             <h3 class="text-lg font-bold">{p.title}</h3>
+            <p class="text-xs text-muted">{p.note}</p>
             <div class="flex flex-wrap gap-2">
               {p.tags.map((t) => (
                 <span class="border-2 border-ink/20 px-2 py-0.5 text-xs font-mono">{t}</span>
               ))}
             </div>
+            <span class="mt-1 font-mono text-xs font-bold">Agregar al pedido →</span>
           </div>
-        </a>
+        </button>
       ))}
     </div>
   </div>

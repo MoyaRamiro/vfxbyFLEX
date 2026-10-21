@@ -1,6 +1,7 @@
 ---
 import { SITE } from '../config/site';
-import { AUDIO_NOTE, WHATSAPP_MODES } from '../config/order';
+import { AUDIO_NOTE, SENA, WHATSAPP_MODES } from '../config/order';
+import { money } from '../lib/pricing';
 ---
 
 <button
@@ -41,10 +42,6 @@ import { AUDIO_NOTE, WHATSAPP_MODES } from '../config/order';
         <span>Subtotal</span>
         <span id="cart-subtotal" class="font-mono">USD 0</span>
       </div>
-      <div id="cart-duration-row" class="flex items-center justify-between text-sm hidden">
-        <span>Duración <span id="cart-duration-label" class="text-muted"></span></span>
-        <span id="cart-duration" class="font-mono">USD 0</span>
-      </div>
       <div class="flex items-center justify-between text-sm">
         <span>Ahorro</span>
         <span id="cart-discount" class="font-mono text-green-700">—</span>
@@ -78,16 +75,23 @@ import { AUDIO_NOTE, WHATSAPP_MODES } from '../config/order';
           ))}
         </div>
       </div>
-      <div class="border-2 border-ink bg-lime/20 px-4 py-3">
-        <p class="font-bold text-sm">Reserva con seña</p>
-        <p class="text-xs text-muted mt-1">El monto de la seña se confirma por WhatsApp.</p>
+      <div id="receipt-hint" class="border-2 border-ink/20 px-4 py-3 hidden">
+        <p class="font-bold text-sm">Comprobante</p>
+        <p class="text-xs text-muted mt-1">
+          Adjuntá la captura o imagen (HEIC, PNG o JPG) en el chat de WhatsApp después de enviar el pedido.
+        </p>
       </div>
       <p class="text-xs text-muted">{AUDIO_NOTE}</p>
     </div>
   </div>
 
   <footer class="flex flex-col gap-3 border-t-2 border-ink p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
-    <button id="cart-wa" class="border-2 border-ink bg-lime px-5 py-3 font-bold text-center hover:bg-ink hover:text-paper transition-colors">Enviar pedido por WhatsApp</button>
+    {SENA.enabled && (
+      <button id="cart-sena" class="border-2 border-ink bg-lime px-5 py-3 font-bold text-center hover:bg-ink hover:text-paper transition-colors">
+        Señar {SENA.amount !== null ? `· USD ${money(SENA.amount)}` : ''}
+      </button>
+    )}
+    <button id="cart-wa" class="border-2 border-ink px-5 py-3 font-bold text-center hover:bg-ink hover:text-paper transition-colors">Enviar pedido</button>
     <button id="cart-clear" class="border-2 border-ink/30 px-4 py-2.5 font-mono text-xs hover:bg-ink hover:text-paper transition-colors">Limpiar carrito</button>
   </footer>
 </aside>
