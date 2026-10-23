@@ -228,7 +228,7 @@ const componentVideo = (id: string): string | undefined => {
             <output id="duration-value" for="duration-slider" class="text-3xl font-bold font-mono">2:00</output>
           </div>
           <input id="duration-slider" type="range" class="duration-range w-full" min={DURATION.minSec} max={DURATION.maxSec} step={DURATION.stepSec} value={DURATION.defaultSec} />
-          <div class="mt-3 flex flex-wrap items-center gap-2">
+          <div class="flex items-center gap-2 mt-3">
             <label for="duration-input" class="font-mono text-[10px] tracking-widest text-muted">{t('write')}</label>
             <input
               id="duration-input"
@@ -237,17 +237,17 @@ const componentVideo = (id: string): string | undefined => {
               autocomplete="off"
               enterkeyhint="done"
               placeholder="3:30"
-              aria-label="{t('write')} la duración en minutos y segundos"
+              aria-label={t('duration')}
               class="w-20 border-2 border-ink/20 px-2 py-1 font-mono text-sm outline-none focus:border-ink"
             />
             <span class="text-[11px] text-muted">{t('durationHint')}</span>
           </div>
-          <p class="text-xs text-muted mt-2">Base 2:00. ±USD 10 por cada 30s, se suma a cada servicio. No aplica a Extras.</p>
+          <p class="text-xs text-muted mt-2">{t('durationBase')}</p>
         </div>
 
         <div>
-          <span class="font-mono text-xs tracking-widest text-muted">MOOD</span>
-          <div class="flex flex-col gap-2 mt-3" role="radiogroup" aria-label="Mood del video">
+          <span class="font-mono text-xs tracking-widest text-muted">{t('mood')}</span>
+          <div class="flex flex-col gap-2 mt-3" role="radiogroup" aria-label={t('mood')}>
             {MOODS.map((m) => (
               <button type="button" class="mood-btn border-2 border-ink/20 px-3 py-2 text-left text-sm font-medium hover:border-ink transition-colors" data-mood={m.id} role="radio" aria-checked="false">
                 {m.label}
@@ -258,11 +258,11 @@ const componentVideo = (id: string): string | undefined => {
 
         {SENA.enabled && (
           <div class="border-2 border-ink bg-lime/20 px-4 py-3">
-            <p class="font-bold text-sm">Reserva con seña</p>
+            <p class="font-bold text-sm">{t('bookWithDeposit')}</p>
             <p class="text-xs text-muted mt-1">
               {SENA.rate === null
-                ? 'El monto de la seña se confirma por WhatsApp.'
-                : `Seña: ${Math.round(SENA.rate * 100)}% del total del pedido.`}
+                ? t('depositConfirmed')
+                : t('depositPercent').replace('{pct}', String(Math.round(SENA.rate * 100)))}
             </p>
           </div>
         )}
@@ -271,11 +271,11 @@ const componentVideo = (id: string): string | undefined => {
   </div>
 
   <div id="preview-modal" class="fixed inset-0 z-[80] hidden" role="dialog" aria-modal="true" aria-labelledby="preview-title">
-    <button type="button" id="preview-backdrop" class="absolute inset-0 bg-ink/70 cursor-default" aria-label="Cerrar previsualización" tabindex="-1"></button>
+    <button type="button" id="preview-backdrop" class="absolute inset-0 bg-ink/70 cursor-default" aria-label={t('closePreviewAria')} tabindex="-1"></button>
     <div class="relative mx-auto mt-[10vh] w-[min(92vw,720px)] border-2 border-ink bg-paper p-4">
       <div class="flex items-center justify-between gap-4 mb-3">
         <h4 id="preview-title" class="font-bold"></h4>
-        <button type="button" id="preview-close" class="border-2 border-ink w-10 h-10 font-bold hover:bg-ink hover:text-paper transition-colors" aria-label="Cerrar">✕</button>
+        <button type="button" id="preview-close" class="border-2 border-ink w-10 h-10 font-bold hover:bg-ink hover:text-paper transition-colors" aria-label={t('close')}>✕</button>
       </div>
       <div id="preview-body" class="aspect-video bg-surface border-2 border-ink/10 flex items-center justify-center overflow-hidden"></div>
     </div>
