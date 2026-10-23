@@ -1,14 +1,24 @@
 ---
 import { SITE } from '../config/site';
 import { AUDIO_NOTE, SENA, WHATSAPP_MODES } from '../config/order';
+import { getLangFromUrl, useTranslations } from '../i18n/utils';
+const lang = getLangFromUrl(Astro.url);
+const t = useTranslations(lang);
 
 const SENA_PCT = Math.round((SENA.rate ?? 0) * 100);
----
 
+const modesEs = Object.values(WHATSAPP_MODES);
+const modesEn = [
+  { id: 'full', label: 'Full quote', intro: 'Send the full order with details.' },
+  { id: 'quick', label: 'Quick quote', intro: 'Send a short summary to get started.' },
+  { id: 'deposit', label: 'Deposit only', intro: 'Prioritize paying the deposit to reserve the slot.' },
+];
+const modes = lang === 'en' ? modesEn : modesEs;
+---
 <button
   type="button"
   class="cart-fab cart-trigger group fixed right-4 sm:right-6 bottom-[max(1rem,env(safe-area-inset-bottom))] z-[75] flex items-center gap-3 border-2 border-ink bg-lime text-ink px-4 sm:px-5 py-3 sm:py-3.5 font-bold shadow-[0_12px_32px_rgba(10,10,10,0.30)] hover:bg-ink hover:text-paper transition-[background-color,color,opacity] duration-200"
-  aria-label="Ver tu pedido"
+  aria-label={t('navCart')}
 >
   <span class="relative inline-flex items-center justify-center">
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -19,20 +29,20 @@ const SENA_PCT = Math.round((SENA.rate ?? 0) * 100);
     <span data-cart-count class="absolute -top-2.5 -right-2.5 min-w-[20px] h-5 px-1 grid place-items-center bg-ink text-lime font-mono text-[11px] leading-none group-hover:bg-lime group-hover:text-ink transition-colors">0</span>
   </span>
   <span class="flex flex-col items-start leading-none">
-    <span class="font-mono text-[10px] tracking-[0.18em] opacity-70">VER PEDIDO</span>
+    <span class="font-mono text-[10px] tracking-[0.18em] opacity-70">{t('navCart').toUpperCase()}</span>
     <span data-cart-total class="font-mono text-sm mt-1 tabular-nums">USD 0</span>
   </span>
 </button>
 
 <div id="cart-backdrop" class="fixed inset-0 z-[80] bg-ink/50 transition-opacity opacity-0 pointer-events-none"></div>
 
-<aside id="cart-drawer" class="fixed inset-y-0 right-0 z-[90] w-full sm:w-[420px] border-l-2 border-ink bg-paper flex flex-col transition-transform duration-300 translate-x-full pointer-events-none" aria-hidden="true" aria-label="Carrito">
+<aside id="cart-drawer" class="fixed inset-y-0 right-0 z-[90] w-full sm:w-[420px] border-l-2 border-ink bg-paper flex flex-col transition-transform duration-300 translate-x-full pointer-events-none" aria-hidden="true" aria-label={t('cart')}>
   <header class="flex items-center justify-between gap-4 border-b-2 border-ink p-5">
     <div>
-      <p class="font-mono text-xs text-muted">CARRITO</p>
-      <p class="font-bold text-lg">Tu pedido <span data-cart-count class="font-mono">0</span></p>
+      <p class="font-mono text-xs text-muted">{t('cart')}</p>
+      <p class="font-bold text-lg">{t('yourOrder')} <span data-cart-count class="font-mono">0</span></p>
     </div>
-    <button id="cart-close" class="border-2 border-ink w-10 h-10 font-bold hover:bg-ink hover:text-paper transition-colors" aria-label="Cerrar carrito">✕</button>
+    <button id="cart-close" class="border-2 border-ink w-10 h-10 font-bold hover:bg-ink hover:text-paper transition-colors" aria-label={lang === 'en' ? 'Close cart' : 'Cerrar carrito'}>✕</button>
   </header>
 
   <div class="flex-1 overflow-y-auto p-5 flex flex-col gap-6">
@@ -40,32 +50,32 @@ const SENA_PCT = Math.round((SENA.rate ?? 0) * 100);
 
     <div class="border-2 border-ink/20 p-5 flex flex-col gap-3">
       <div class="flex items-center justify-between text-sm">
-        <span>Subtotal</span>
+        <span>{t('subtotal')}</span>
         <span id="cart-subtotal" class="font-mono">USD 0</span>
       </div>
       <div class="flex items-center justify-between text-sm">
-        <span>Ahorro</span>
+        <span>{t('discount')}</span>
         <span id="cart-discount" class="font-mono text-green-700">—</span>
       </div>
       <div class="flex items-center justify-between font-bold text-lg border-t-2 border-ink/20 pt-3">
-        <span>TOTAL</span>
+        <span>{t('total')}</span>
         <span id="cart-total" class="font-mono">USD 0</span>
       </div>
     </div>
 
     <div class="flex flex-col gap-4">
       <div>
-        <label class="block font-mono text-xs text-muted mb-2">INSTAGRAM (opcional)</label>
+        <label class="block font-mono text-xs text-muted mb-2">{t('instagramOptional')}</label>
         <input id="customer-ig" type="text" class="w-full border-2 border-ink px-3 py-2" placeholder="@usuario" />
       </div>
       <div>
-        <label class="block font-mono text-xs text-muted mb-2">NOTAS</label>
-        <textarea id="customer-notes" class="w-full border-2 border-ink px-3 py-2 min-h-[90px]" placeholder="Detalles, referencia, tono deseado..."></textarea>
+        <label class="block font-mono text-xs text-muted mb-2">{t('notes')}</label>
+        <textarea id="customer-notes" class="w-full border-2 border-ink px-3 py-2 min-h-[90px]" placeholder={t('notesPlaceholder')}></textarea>
       </div>
       <div>
-        <span class="block font-mono text-xs text-muted mb-2">MODO DE WHATSAPP</span>
+        <span class="block font-mono text-xs text-muted mb-2">{t('whatsappMode')}</span>
         <div class="flex flex-col gap-2">
-          {Object.values(WHATSAPP_MODES).map((m) => (
+          {modes.map((m) => (
             <label class="flex items-start gap-2 text-sm">
               <input type="radio" class="mode-radio mt-1" name="mode" value={m.id} />
               <span>
@@ -77,9 +87,9 @@ const SENA_PCT = Math.round((SENA.rate ?? 0) * 100);
         </div>
       </div>
       <div id="receipt-hint" class="border-2 border-ink/20 px-4 py-3 hidden">
-        <p class="font-bold text-sm">Comprobante</p>
+        <p class="font-bold text-sm">{t('receipt')}</p>
         <p class="text-xs text-muted mt-1">
-          Adjuntá la captura o imagen (HEIC, PNG o JPG) en el chat de WhatsApp después de enviar el pedido.
+          {t('receiptText')}
         </p>
       </div>
       <p class="text-xs text-muted">{AUDIO_NOTE}</p>
@@ -90,14 +100,14 @@ const SENA_PCT = Math.round((SENA.rate ?? 0) * 100);
     {SENA.enabled && (
       <div class="border-2 border-ink bg-ink text-paper overflow-hidden">
         <div class="bg-lime text-ink px-3 py-1.5 font-black text-xs tracking-[0.25em] uppercase text-center animate-pulse">
-          30% OFF · 1 CUPO DISPONIBLE PARA ESTE MES
+          {t('urgencyBanner')}
         </div>
         <button id="cart-sena" class="w-full px-5 py-3 font-bold text-center hover:bg-paper hover:text-ink transition-colors">
-          Señar {SENA.rate !== null ? `· ${SENA_PCT}%` : ''}
+          {t('senaBtn')} {SENA.rate !== null ? `· ${SENA_PCT}%` : ''}
         </button>
       </div>
     )}
-    <button id="cart-wa" class="border-2 border-ink px-5 py-3 font-bold text-center hover:bg-ink hover:text-paper transition-colors">Enviar pedido</button>
-    <button id="cart-clear" class="border-2 border-ink/30 px-4 py-2.5 font-mono text-xs hover:bg-ink hover:text-paper transition-colors">Limpiar carrito</button>
+    <button id="cart-wa" class="border-2 border-ink px-5 py-3 font-bold text-center hover:bg-ink hover:text-paper transition-colors">{t('sendOrder')}</button>
+    <button id="cart-clear" class="border-2 border-ink/30 px-4 py-2.5 font-mono text-xs hover:bg-ink hover:text-paper transition-colors">{t('clearCart')}</button>
   </footer>
 </aside>

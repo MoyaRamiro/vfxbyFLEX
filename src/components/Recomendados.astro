@@ -1,5 +1,9 @@
 ---
-const cards = [
+import { getLangFromUrl, useTranslations } from '../i18n/utils';
+const lang = getLangFromUrl(Astro.url);
+const t = useTranslations(lang);
+
+const cardsEs = [
   {
     preset: 'croma-full-4',
     title: 'Croma Full · 4 entornos',
@@ -25,14 +29,42 @@ const cards = [
     video: 'visuales',
   },
 ];
----
 
+const cardsEn = [
+  {
+    preset: 'croma-full-4',
+    title: 'Chroma Full · 4 environments',
+    category: 'CHROMA',
+    tags: ['Chroma', '3D'],
+    note: 'Built with all 4 environments included.',
+    video: 'croma-25d-3d',
+  },
+  {
+    preset: 'vfx-full-all',
+    title: 'VFX Full',
+    category: 'VFX',
+    tags: ['VFX'],
+    note: 'All package components included.',
+    video: 'vfx-full',
+  },
+  {
+    preset: 'visual-25d',
+    title: '2.5D Image Visual',
+    category: 'VISUAL',
+    tags: ['Visual'],
+    note: 'A moving image with 2.5D motion.',
+    video: 'visuales',
+  },
+];
+
+const cards = lang === 'en' ? cardsEn : cardsEs;
+---
 <section class="px-6 md:px-10 py-20 md:py-28 border-t-2 border-ink/10 bg-paper">
   <div class="max-w-6xl mx-auto">
     <div class="flex flex-wrap items-end justify-between gap-4 mb-8">
       <div>
-        <span class="font-mono text-xs tracking-widest text-muted">RECOMENDADOS</span>
-        <h2 class="text-3xl md:text-5xl font-bold mt-2">Lo que más piden mis clientes</h2>
+        <span class="font-mono text-xs tracking-widest text-muted">{t('recommended')}</span>
+        <h2 class="text-3xl md:text-5xl font-bold mt-2">{t('recommendedTitle')}</h2>
       </div>
     </div>
     <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -44,7 +76,7 @@ const cards = [
         >
           <div class="flex items-center justify-between border-b-2 border-ink px-3 py-2">
             <span class="font-mono text-xs font-bold tracking-widest">{p.category}</span>
-            <span class="font-mono text-[10px] tracking-widest text-muted">PREVIEW</span>
+            <span class="font-mono text-[10px] tracking-widest text-muted">{t('preview')}</span>
           </div>
           <div class="relative aspect-video overflow-hidden bg-ink">
             <video
@@ -62,11 +94,11 @@ const cards = [
             <h3 class="text-lg font-bold">{p.title}</h3>
             <p class="text-xs text-muted">{p.note}</p>
             <div class="flex flex-wrap gap-2">
-              {p.tags.map((t) => (
-                <span class="border-2 border-ink/20 px-2 py-0.5 text-xs font-mono">{t}</span>
+              {p.tags.map((tag) => (
+                <span class="border-2 border-ink/20 px-2 py-0.5 text-xs font-mono">{tag}</span>
               ))}
             </div>
-            <span class="mt-1 font-mono text-xs font-bold">Agregar al pedido →</span>
+            <span class="mt-1 font-mono text-xs font-bold">{t('addToOrder')}</span>
           </div>
         </button>
       ))}
