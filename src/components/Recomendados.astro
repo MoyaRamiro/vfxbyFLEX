@@ -6,7 +6,7 @@ const cards = [
     category: 'CROMA',
     tags: ['Croma', '3D'],
     note: 'Armado con los 4 entornos incluidos.',
-    video: '/videos/croma 2.5D y 3D.webm',
+    video: 'croma-25d-3d',
   },
   {
     preset: 'vfx-full-all',
@@ -14,7 +14,7 @@ const cards = [
     category: 'VFX',
     tags: ['VFX'],
     note: 'Todos los componentes del paquete.',
-    video: '/videos/vfx-full.webm',
+    video: 'vfx-full',
   },
   {
     preset: 'visual-25d',
@@ -22,7 +22,7 @@ const cards = [
     category: 'VISUAL',
     tags: ['Visual'],
     note: 'Una imagen en movimiento 2.5D.',
-    video: '/videos/visuales.webm',
+    video: 'visuales',
   },
 ];
 ---
@@ -48,13 +48,14 @@ const cards = [
           </div>
           <div class="relative aspect-video overflow-hidden bg-ink">
             <video
-              src={encodeURI(p.video)}
+              data-src={`/videos/preview/${p.video}.mp4`}
+              poster={`/videos/preview/${p.video}.webp`}
               class="w-full h-full object-cover pointer-events-none group-hover:scale-[1.03] transition-transform duration-300"
-              autoplay
               muted
               loop
               playsinline
-              preload="metadata"
+              preload="none"
+              aria-hidden="true"
             ></video>
           </div>
           <div class="p-4 border-t-2 border-ink flex flex-col gap-2">

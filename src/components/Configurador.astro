@@ -14,29 +14,33 @@ const previews: Record<string, string> = {
   montaje: montaje.src,
 };
 
-// Ejemplos en video por opción (public/videos).
+// Piezas de video optimizadas en public/videos/preview (tiles) y /hd (modal).
 const optionVideos: Record<string, string> = {
-  'croma-25d-3d': '/videos/croma 2.5D y 3D.webm',
-  'croma-mezclado': '/videos/croma-mezclado-3d-y-normales.webm',
-  'croma-video-full': '/videos/croma fondo blanco y vfx full.webm',
-  'croma-2d': '/videos/croma 2D sin profundidad.webm',
-  'vfx-basico': '/videos/vfx basico.webm',
-  'vfx-pro': '/videos/vfx-pro.webm',
-  'vfx-full': '/videos/vfx-full.webm',
-  'montaje-montaje': '/videos/montage.webm',
-  'montaje-transiciones': '/videos/transiciones.webm',
-  'visual-25d-imagen': '/videos/visuales.webm',
+  'croma-25d-3d': 'croma-25d-3d',
+  'croma-mezclado': 'croma-mezclado',
+  'croma-video-full': 'croma-full',
+  'croma-2d': 'croma-2d',
+  'vfx-basico': 'vfx-basico',
+  'vfx-pro': 'vfx-pro',
+  'vfx-full': 'vfx-full',
+  'montaje-montaje': 'montaje',
+  'montaje-transiciones': 'transiciones',
+  'visual-25d-imagen': 'visuales',
 };
+
+const videoPreview = (slug: string) => `/videos/preview/${slug}.mp4`;
+const videoHd = (slug: string) => `/videos/hd/${slug}.mp4`;
+const videoPoster = (slug: string) => `/videos/preview/${slug}.webp`;
 
 // Estas opciones no llevan previsualización (ni video ni imagen).
 const noPreview = new Set(['visual-only-lyrics', 'visual-lyrics-pro']);
 
 // Ejemplos por componente de los paquetes VFX (según el sufijo del id).
 const componentVideo = (id: string): string | undefined => {
-  if (id.endsWith('-transiciones')) return '/videos/transiciones.webm';
-  if (id.endsWith('-camaras')) return '/videos/camaras lentas.webm';
-  if (id.endsWith('-titulo')) return '/videos/titulo.webm';
-  if (id.endsWith('-rotoscopia')) return '/videos/rotoscopias.webm';
+  if (id.endsWith('-transiciones')) return 'transiciones';
+  if (id.endsWith('-camaras')) return 'camaras-lentas';
+  if (id.endsWith('-titulo')) return 'titulo';
+  if (id.endsWith('-rotoscopia')) return 'rotoscopias';
   return undefined;
 };
 ---
@@ -130,20 +134,21 @@ const componentVideo = (id: string): string | undefined => {
                         <button
                           type="button"
                           class="preview-btn group relative shrink-0 w-28 sm:w-32 overflow-hidden border-2 border-ink/20 hover:border-ink transition-colors"
-                          data-preview={optionVideos[o.id] ?? previews[c.id] ?? ''}
+                          data-preview={optionVideos[o.id] ? videoHd(optionVideos[o.id]) : previews[c.id] ?? ''}
                           data-preview-type={optionVideos[o.id] ? 'video' : 'image'}
+                          data-poster={optionVideos[o.id] ? videoPoster(optionVideos[o.id]) : undefined}
                           data-title={`${c.name} · ${o.label}`}
                           aria-label={`Previsualizar ${o.label}`}
                         >
                           {optionVideos[o.id] ? (
                             <video
-                              src={encodeURI(optionVideos[o.id])}
+                              data-src={videoPreview(optionVideos[o.id])}
+                              poster={videoPoster(optionVideos[o.id])}
                               class="w-full h-16 sm:h-20 object-cover pointer-events-none"
-                              autoplay
                               muted
                               loop
                               playsinline
-                              preload="metadata"
+                              preload="none"
                             ></video>
                           ) : (
                             <img src={previews[c.id]} alt="" class="w-full h-16 sm:h-20 object-cover pointer-events-none" />
@@ -169,19 +174,20 @@ const componentVideo = (id: string): string | undefined => {
                                   <button
                                     type="button"
                                     class="preview-btn group relative shrink-0 w-20 h-12 overflow-hidden border-2 border-ink/20 hover:border-ink transition-colors"
-                                    data-preview={vid}
+                                    data-preview={videoHd(vid)}
                                     data-preview-type="video"
+                                    data-poster={videoPoster(vid)}
                                     data-title={comp.label}
                                     aria-label={`Previsualizar ${comp.label}`}
                                   >
                                     <video
-                                      src={encodeURI(vid)}
+                                      data-src={videoPreview(vid)}
+                                      poster={videoPoster(vid)}
                                       class="w-full h-full object-cover pointer-events-none"
-                                      autoplay
                                       muted
                                       loop
                                       playsinline
-                                      preload="metadata"
+                                      preload="none"
                                     ></video>
                                     <span class="absolute inset-0 grid place-items-center bg-ink/40 text-paper text-[10px] font-bold tracking-widest group-hover:bg-ink/60 transition-colors">Ver</span>
                                   </button>

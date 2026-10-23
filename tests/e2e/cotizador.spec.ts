@@ -103,12 +103,25 @@ test('preset card pre-arms the order and opens the drawer', async ({ page }) => 
   await expect(page.locator('#cart-total')).toContainText('45');
 });
 
-test('preview opens the matching webm video', async ({ page }) => {
+test('preview opens the matching hd video', async ({ page }) => {
   await page.goto('/');
   await page.locator('.cat-tab[data-category="vfx"]').click();
   // Open the VFX Full package preview ("Ver" next to the option).
   await page.locator('.option-btn[data-option="vfx-full"]').locator('xpath=following-sibling::button[contains(@class,"preview-btn")]').click();
   const video = page.locator('#preview-body video');
-  await expect(video).toHaveAttribute('src', /vfx-full\.webm/);
+  await expect(video).toHaveAttribute('src', /videos\/hd\/vfx-full\.mp4/);
   await expect(page.locator('#preview-modal')).not.toHaveClass(/hidden/);
+});
+
+test('inline previews load only when they enter the viewport', async ({ page }) => {
+  await page.goto('/');
+  const firstPreview = page.locator('.preview-btn video').first();
+  await expect(firstPreview).not.toHaveAttribute('src');
+
+  const presetVideo = page.locator('.preset-card video').first();
+  await presetVideo.scrollIntoViewIfNeeded();
+  await expect(presetVideo).toHaveAttribute('src', /videos\/preview\/croma-25d-3d\.mp4/);
+
+  await firstPreview.scrollIntoViewIfNeeded();
+  await expect(firstPreview).toHaveAttribute('src', /videos\/preview\/.*\.mp4/);
 });

@@ -221,8 +221,9 @@ function applyPreset(state: CartState, preset: string): CartState {
   return next;
 }
 
-// Reproduce en bucle las previsualizaciones en línea solo mientras están
-// visibles, para no decodificar decenas de videos fuera de pantalla.
+// Carga y reproduce las previsualizaciones solo al acercarse a pantalla.
+// Los videos arrancan con preload="none" y su poster, para no descargar
+// decenas de archivos ni decodificar video fuera de vista.
 function initPreviewVideos() {
   const videos = Array.from(
     document.querySelectorAll<HTMLVideoElement>('.preview-btn video, .preset-card video')
@@ -232,19 +233,24 @@ function initPreviewVideos() {
     v.muted = true;
     v.loop = true;
   }
+  const load = (video: HTMLVideoElement) => {
+    const src = video.dataset.src;
+    if (src && !video.getAttribute('src')) video.src = src;
+    void video.play().catch(() => {});
+  };
   if (!('IntersectionObserver' in window)) {
-    videos.forEach((v) => void v.play().catch(() => {}));
+    videos.forEach(load);
     return;
   }
   const io = new IntersectionObserver(
     (entries) => {
       for (const entry of entries) {
         const video = entry.target as HTMLVideoElement;
-        if (entry.isIntersecting) void video.play().catch(() => {});
+        if (entry.isIntersecting) load(video);
         else video.pause();
       }
     },
-    { threshold: 0.15 }
+    { threshold: 0.15, rootMargin: '200px 0px' }
   );
   videos.forEach((v) => io.observe(v));
 }
@@ -396,12 +402,13 @@ export function initConfigurator() {
       if (!modal || !title || !body) return;
       const raw = btn.dataset.preview || '';
       const src = raw ? encodeURI(raw) : '';
-      const isVideo = btn.dataset.previewType === 'video' || /\.webm$/i.test(raw);
+      const poster = btn.dataset.poster ? encodeURI(btn.dataset.poster) : '';
+      const isVideo = btn.dataset.previewType === 'video' || /\.(webm|mp4)$/i.test(raw);
       title.textContent = btn.dataset.title || '';
       if (!src) {
         body.innerHTML = '<span class="text-muted text-sm">Sin previsualización disponible.</span>';
       } else if (isVideo) {
-        body.innerHTML = `<video src="${src}" class="w-full h-full object-contain bg-ink" autoplay muted loop playsinline controls></video>`;
+        body.innerHTML = `<video src="${src}"${poster ? ` poster="${poster}"` : ''} class="w-full h-full object-contain bg-ink" autoplay muted loop playsinline preload="auto" controls></video>`;
         void body.querySelector('video')?.play().catch(() => {});
       } else {
         body.innerHTML = `<img src="${src}" alt="" class="w-full h-full object-cover" />`;
