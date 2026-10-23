@@ -133,7 +133,7 @@ const componentVideo = (id: string): string | undefined => {
                           )}
                         </span>
                       </button>
-                      {!noPreview.has(o.id) && !o.extra && (
+                      {!noPreview.has(o.id) && !o.extra && c.id !== 'extras' && (
                         <button
                           type="button"
                           class="preview-btn group relative shrink-0 w-28 sm:w-32 overflow-hidden border-2 border-ink/20 hover:border-ink transition-colors"
