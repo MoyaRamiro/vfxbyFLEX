@@ -88,9 +88,14 @@ const SENA_PCT = Math.round((SENA.rate ?? 0) * 100);
 
   <footer class="flex flex-col gap-3 border-t-2 border-ink p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
     {SENA.enabled && (
-      <button id="cart-sena" class="border-2 border-ink bg-lime px-5 py-3 font-bold text-center hover:bg-ink hover:text-paper transition-colors">
-        Señar {SENA.rate !== null ? `· ${SENA_PCT}%` : ''}
-      </button>
+      <div class="border-2 border-ink bg-ink text-paper overflow-hidden">
+        <div class="bg-lime text-ink px-3 py-1.5 font-black text-xs tracking-[0.25em] uppercase text-center animate-pulse">
+          30% OFF · 1 CUPO DISPONIBLE PARA ESTE MES
+        </div>
+        <button id="cart-sena" class="w-full px-5 py-3 font-bold text-center hover:bg-paper hover:text-ink transition-colors">
+          Señar {SENA.rate !== null ? `· ${SENA_PCT}%` : ''}
+        </button>
+      </div>
     )}
     <button id="cart-wa" class="border-2 border-ink px-5 py-3 font-bold text-center hover:bg-ink hover:text-paper transition-colors">Enviar pedido</button>
     <button id="cart-clear" class="border-2 border-ink/30 px-4 py-2.5 font-mono text-xs hover:bg-ink hover:text-paper transition-colors">Limpiar carrito</button>
