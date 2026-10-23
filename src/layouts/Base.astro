@@ -8,8 +8,9 @@ import { SITE } from '../config/site';
 interface Props {
   title?: string;
   description?: string;
+  lang?: string;
 }
-const { title = SITE.title, description = SITE.description } = Astro.props;
+const { title = SITE.title, description = SITE.description, lang = 'es' } = Astro.props;
 const siteBase = Astro.site ?? new URL(SITE.url);
 const canonical = new URL(Astro.url.pathname, siteBase).href;
 const ogImage = new URL('/og.png', siteBase).href;
@@ -35,7 +36,7 @@ const jsonLd = {
 ---
 
 <!doctype html>
-<html lang="es">
+<html lang={lang}>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
@@ -47,7 +48,7 @@ const jsonLd = {
 
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content={SITE.name} />
-    <meta property="og:locale" content="es_AR" />
+    <meta property="og:locale" content={lang === 'en' ? 'en_US' : 'es_AR'} />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonical} />

@@ -1,0 +1,43 @@
+---
+import Base from '../../layouts/Base.astro';
+import Hero from '../../components/Hero.astro';
+import Recomendados from '../../components/Recomendados.astro';
+import Configurador from '../../components/Configurador.astro';
+import CartDrawer from '../../components/CartDrawer.astro';
+import Marquee from '../../components/Marquee.astro';
+import Footer from '../../components/Footer.astro';
+import { SITE } from '../../config/site';
+---
+
+<Base title={`${SITE.title} · Configurator`} description="Build your VFX order and send it via WhatsApp in 1 minute." lang="en">
+  <Hero />
+  <Recomendados />
+  <Configurador />
+  <CartDrawer />
+  <Marquee />
+  <Footer />
+
+  <script>
+import { initConfigurator } from '../../lib/configurator-ui';
+    import { initDrawer } from '../../lib/drawer-ui';
+    import { promoActive, promoRemaining, formatCountdown } from '../../lib/promo';
+
+    initConfigurator({ lang: 'en' });
+    initDrawer({ lang: 'en' });
+
+    const banner = document.getElementById('promo-banner');
+    const cd = document.getElementById('promo-countdown');
+    function tick() {
+      if (!banner || !cd) return;
+      if (!promoActive()) {
+        banner.setAttribute('hidden', 'true');
+        return;
+      }
+      banner.removeAttribute('hidden');
+      cd.textContent = formatCountdown(promoRemaining());
+    }
+    tick();
+    setInterval(tick, 1000);
+  </script>
+</Base>
+
