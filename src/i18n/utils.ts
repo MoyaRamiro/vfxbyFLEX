@@ -1,0 +1,114 @@
+export const defaultLang = 'es';
+export const languages = {
+  es: 'Español',
+  en: 'English',
+} as const;
+
+export const ui = {
+  es: {
+    navArmar: 'Armar pedido',
+    navCart: 'Carrito',
+    reviews: 'Recomendado por muchos artistas',
+    reviewsSub: 'Mirá las reseñas en historias destacadas de Instagram.',
+    startNow: 'Empezar ahora',
+    seeWorks: 'Ver trabajos',
+    recommended: 'RECOMENDADOS',
+    recommendedTitle: 'Lo que más piden mis clientes',
+    preview: 'PREVIEW',
+    addToOrder: 'Agregar al pedido →',
+    configTitle: 'Configurá tu pedido',
+    configSubtitle: 'Armá tu pedido paso a paso. El total se actualiza en vivo y al terminar lo mandás por WhatsApp.',
+    promoEnds: 'Termina en',
+    duration: 'DURACIÓN',
+    write: 'ESCRIBIR',
+    durationHint: 'min:seg o minutos (ej. 3 o 3:30)',
+    mood: 'MOOD',
+    services: 'SERVICIOS',
+    total: 'TOTAL',
+    promo: 'PROMO',
+    discount: 'Ahorro',
+    subtotal: 'Subtotal',
+    senaLabel: 'Seña',
+    senaText: 'Seña: 10% del total del pedido.',
+    senaBtn: 'Señar',
+    sendOrder: 'Enviar pedido',
+    clearCart: 'Limpiar carrito',
+    cart: 'CARRITO',
+    yourOrder: 'Tu pedido',
+    instagramOptional: 'INSTAGRAM (opcional)',
+    notes: 'NOTAS',
+    notesPlaceholder: 'Detalles, referencia, tono deseado...',
+    whatsappMode: 'MODO DE WHATSAPP',
+    receipt: 'Comprobante',
+    receiptText: 'Adjuntá la captura o imagen (HEIC, PNG o JPG) en el chat de WhatsApp después de enviar el pedido.',
+    urgencyBanner: '30% OFF · 1 CUPO DISPONIBLE PARA ESTE MES',
+    componentsIncluded: 'COMPONENTES INCLUIDOS · quitá los que no quieras',
+    environments: 'Cantidad de entornos',
+    environment: 'entorno',
+    environmentsPlural: 'entornos',
+    previewBtn: 'Ver',
+    noPreview: 'Sin previsualización disponible.',
+    previewAvailable: 'Previsualizar',
+  },
+  en: {
+    navArmar: 'Start order',
+    navCart: 'Cart',
+    reviews: 'Recommended by many artists',
+    reviewsSub: 'See reviews in Instagram highlighted stories.',
+    startNow: 'Start now',
+    seeWorks: 'See works',
+    recommended: 'RECOMMENDED',
+    recommendedTitle: 'Most requested by clients',
+    preview: 'PREVIEW',
+    addToOrder: 'Add to order →',
+    configTitle: 'Configure your order',
+    configSubtitle: 'Build your order step by step. Total updates live and you send it via WhatsApp when done.',
+    promoEnds: 'Ends in',
+    duration: 'DURATION',
+    write: 'TYPE',
+    durationHint: 'min:sec or minutes (e.g. 3 or 3:30)',
+    mood: 'MOOD',
+    services: 'SERVICES',
+    total: 'TOTAL',
+    promo: 'PROMO',
+    discount: 'Savings',
+    subtotal: 'Subtotal',
+    senaLabel: 'Deposit',
+    senaText: 'Deposit: 10% of the order total.',
+    senaBtn: 'Pay deposit',
+    sendOrder: 'Send order',
+    clearCart: 'Clear cart',
+    cart: 'CART',
+    yourOrder: 'Your order',
+    instagramOptional: 'INSTAGRAM (optional)',
+    notes: 'NOTES',
+    notesPlaceholder: 'Details, reference, desired tone...',
+    whatsappMode: 'WHATSAPP MODE',
+    receipt: 'Receipt',
+    receiptText: 'Attach a screenshot or image (HEIC, PNG or JPG) in the WhatsApp chat after sending your order.',
+    urgencyBanner: '30% OFF · 1 SPOT LEFT FOR THIS MONTH',
+    componentsIncluded: 'INCLUDED COMPONENTS · remove what you don\'t want',
+    environments: 'Number of environments',
+    environment: 'environment',
+    environmentsPlural: 'environments',
+    previewBtn: 'View',
+    noPreview: 'No preview available.',
+    previewAvailable: 'Preview',
+  },
+} as const;
+
+export type Lang = keyof typeof ui;
+export function getLangFromUrl(url: URL): Lang {
+  const [, lang] = url.pathname.split('/');
+  if (lang === 'en') return 'en';
+  return defaultLang;
+}
+export function useTranslations(lang: Lang) {
+  return function t(key: keyof typeof ui[typeof defaultLang]) {
+    return ui[lang][key];
+  };
+}
+export function getLocalizedPath(lang: Lang, path: string) {
+  if (lang === defaultLang) return path === '' ? '/' : path;
+  return path === '' ? `/${lang}` : `/${lang}${path.startsWith('/') ? path : `/${path}`}`;
+}
