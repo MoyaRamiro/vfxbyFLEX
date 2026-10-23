@@ -1,18 +1,21 @@
 ---
 import { SITE } from '../config/site';
+import { getLangFromUrl, useTranslations } from '../i18n/utils';
+const lang = getLangFromUrl(Astro.url);
+const t = useTranslations(lang);
 ---
 
 <footer id="footer" class="border-t-2 border-ink px-6 md:px-10 pt-16 pb-28">
   <div class="max-w-6xl mx-auto grid gap-10 md:grid-cols-2">
     <div>
-      <p class="footer-title text-3xl md:text-5xl font-bold">¿Listo para tu VFX?</p>
+      <p class="footer-title text-3xl md:text-5xl font-bold">{t('ready')}</p>
       <a
         href={`https://wa.me/${SITE.whatsapp}`}
         target="_blank"
         rel="noopener noreferrer"
         class="footer-cta mt-6 inline-flex items-center gap-3 bg-ink text-paper px-8 py-4 font-bold border-2 border-ink hover:bg-cyan hover:text-ink hover:border-cyan transition-colors"
       >
-        Escribir por WhatsApp →
+        {t('writeWhatsapp')}
       </a>
     </div>
     <div class="flex flex-col gap-3 md:items-end md:text-right justify-end text-sm">

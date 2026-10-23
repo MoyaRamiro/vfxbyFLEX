@@ -18,7 +18,7 @@ const modes = lang === 'en' ? modesEn : modesEs;
 <button
   type="button"
   class="cart-fab cart-trigger group fixed right-4 sm:right-6 bottom-[max(1rem,env(safe-area-inset-bottom))] z-[75] flex items-center gap-3 border-2 border-ink bg-lime text-ink px-4 sm:px-5 py-3 sm:py-3.5 font-bold shadow-[0_12px_32px_rgba(10,10,10,0.30)] hover:bg-ink hover:text-paper transition-[background-color,color,opacity] duration-200"
-  aria-label={t('navCart')}
+  aria-label={t('openCartAria')}
 >
   <span class="relative inline-flex items-center justify-center">
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -29,7 +29,7 @@ const modes = lang === 'en' ? modesEn : modesEs;
     <span data-cart-count class="absolute -top-2.5 -right-2.5 min-w-[20px] h-5 px-1 grid place-items-center bg-ink text-lime font-mono text-[11px] leading-none group-hover:bg-lime group-hover:text-ink transition-colors">0</span>
   </span>
   <span class="flex flex-col items-start leading-none">
-    <span class="font-mono text-[10px] tracking-[0.18em] opacity-70">{t('navCart').toUpperCase()}</span>
+    <span class="font-mono text-[10px] tracking-[0.18em] opacity-70">{t('viewCart')}</span>
     <span data-cart-total class="font-mono text-sm mt-1 tabular-nums">USD 0</span>
   </span>
 </button>
@@ -42,7 +42,7 @@ const modes = lang === 'en' ? modesEn : modesEs;
       <p class="font-mono text-xs text-muted">{t('cart')}</p>
       <p class="font-bold text-lg">{t('yourOrder')} <span data-cart-count class="font-mono">0</span></p>
     </div>
-    <button id="cart-close" class="border-2 border-ink w-10 h-10 font-bold hover:bg-ink hover:text-paper transition-colors" aria-label={lang === 'en' ? 'Close cart' : 'Cerrar carrito'}>✕</button>
+    <button id="cart-close" class="border-2 border-ink w-10 h-10 font-bold hover:bg-ink hover:text-paper transition-colors" aria-label={t('closeCartAria')}>✕</button>
   </header>
 
   <div class="flex-1 overflow-y-auto p-5 flex flex-col gap-6">
@@ -102,9 +102,9 @@ const modes = lang === 'en' ? modesEn : modesEs;
         <div class="bg-lime text-ink px-3 py-1.5 font-black text-xs tracking-[0.25em] uppercase text-center animate-pulse">
           {t('urgencyBanner')}
         </div>
-        <button id="cart-sena" class="w-full px-5 py-3 font-bold text-center hover:bg-paper hover:text-ink transition-colors">
-          {t('senaBtn')} {SENA.rate !== null ? `· ${SENA_PCT}%` : ''}
-        </button>
+    <button id="cart-sena" class="w-full px-5 py-3 font-bold text-center hover:bg-paper hover:text-ink transition-colors">
+      {t('senaBtn')} {SENA.rate !== null ? `· ${SENA_PCT}%` : ''}
+    </button>
       </div>
     )}
     <button id="cart-wa" class="border-2 border-ink px-5 py-3 font-bold text-center hover:bg-ink hover:text-paper transition-colors">{t('sendOrder')}</button>

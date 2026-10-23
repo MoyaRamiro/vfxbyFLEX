@@ -6,6 +6,9 @@ import visualizer from '../assets/projects/visualizer.png';
 import croma from '../assets/projects/croma.png';
 import vfxPro from '../assets/projects/vfx-pro.png';
 import montaje from '../assets/projects/montaje.png';
+import { getLangFromUrl, useTranslations } from '../i18n/utils';
+const lang = getLangFromUrl(Astro.url);
+const t = useTranslations(lang);
 
 const previews: Record<string, string> = {
   visual: visualizer.src,
@@ -48,11 +51,11 @@ const componentVideo = (id: string): string | undefined => {
 <section id="servicios" class="px-6 md:px-10 py-24 md:py-32 bg-surface">
   <div class="max-w-6xl mx-auto">
     <div class="flex items-end justify-between mb-4">
-      <h2 class="servicios-title text-4xl md:text-6xl font-bold">Configurá tu pedido</h2>
-      <span class="hidden md:block font-mono text-sm text-muted">TIMELINE · SERVICIOS</span>
+      <h2 class="servicios-title text-4xl md:text-6xl font-bold">{t('configTitle')}</h2>
+      <span class="hidden md:block font-mono text-sm text-muted">{t('timelineServices')}</span>
     </div>
     <p class="text-muted mb-6 max-w-xl">
-      Armá tu pedido paso a paso. El total se actualiza en vivo y al terminar lo mandás por WhatsApp.
+      {t('configSubtitle')}
     </p>
 
     <div id="promo-banner" class="promo-banner mb-8 relative overflow-hidden border-2 border-ink bg-ink" hidden>
@@ -60,10 +63,10 @@ const componentVideo = (id: string): string | undefined => {
       <div class="relative flex flex-wrap items-center justify-between gap-4 px-6 py-5">
         <div class="flex items-baseline gap-4">
           <span class="text-5xl md:text-7xl font-black tracking-tighter text-lime leading-none">30% OFF</span>
-          <span class="text-xl md:text-3xl font-bold text-paper">SOLO POR HOY</span>
+          <span class="text-xl md:text-3xl font-bold text-paper">{t('promoOnlyToday')}</span>
         </div>
         <div class="flex items-center gap-3">
-          <span class="font-mono text-sm text-paper/70">Termina en</span>
+          <span class="font-mono text-sm text-paper/70">{t('promoEnds')}</span>
           <span id="promo-countdown" class="font-mono text-2xl md:text-3xl font-black bg-lime text-ink px-4 py-1 tabular-nums">--:--:--</span>
         </div>
       </div>
@@ -71,7 +74,7 @@ const componentVideo = (id: string): string | undefined => {
 
     <div class="grid lg:grid-cols-[minmax(0,1fr)_300px] gap-8 items-start">
       <div class="min-w-0">
-        <div role="tablist" aria-label="Categorías" class="flex flex-wrap gap-2 mb-6">
+        <div role="tablist" aria-label={t('categoriesAria')} class="flex flex-wrap gap-2 mb-6">
           {CATEGORIES.map((c, i) => (
             <button
               type="button"
@@ -126,7 +129,7 @@ const componentVideo = (id: string): string | undefined => {
                           )}
                           <span class="option-now font-mono font-bold" data-price={o.price} data-promo={o.promo ? '1' : '0'}>USD {money(o.price)}</span>
                           {o.promo && (
-                            <span class="option-badge bg-lime text-ink text-[10px] font-bold px-1.5 py-0.5 leading-none">-30%</span>
+                            <span class="option-badge bg-lime text-ink text-[10px] font-bold px-1.5 py-0.5 leading-none">{t('discountBadge')}</span>
                           )}
                         </span>
                       </button>
@@ -138,7 +141,7 @@ const componentVideo = (id: string): string | undefined => {
                           data-preview-type={optionVideos[o.id] ? 'video' : 'image'}
                           data-poster={optionVideos[o.id] ? videoPoster(optionVideos[o.id]) : undefined}
                           data-title={`${c.name} · ${o.label}`}
-                          aria-label={`Previsualizar ${o.label}`}
+                          aria-label={`${t('previewAria')} ${o.label}`}
                         >
                           {optionVideos[o.id] ? (
                             <video
@@ -153,13 +156,13 @@ const componentVideo = (id: string): string | undefined => {
                           ) : (
                             <img src={previews[c.id]} alt="" class="w-full h-16 sm:h-20 object-cover pointer-events-none" />
                           )}
-                          <span class="absolute inset-0 grid place-items-center bg-ink/40 text-paper text-xs font-bold tracking-widest group-hover:bg-ink/60 transition-colors">Ver</span>
+                          <span class="absolute inset-0 grid place-items-center bg-ink/40 text-paper text-xs font-bold tracking-widest group-hover:bg-ink/60 transition-colors">{t('previewBtn')}</span>
                         </button>
                       )}
                     </div>
                     {o.bundle && (
                       <div class="bundle-panel mt-2 border-2 border-ink/20 bg-surface p-3" data-bundle-panel={o.id} hidden>
-                        <p class="font-mono text-[10px] tracking-widest text-muted mb-2">COMPONENTES INCLUIDOS · quitá los que no quieras</p>
+                        <p class="font-mono text-[10px] tracking-widest text-muted mb-2">{t('componentsIncluded').toUpperCase()}</p>
                         <div class="flex flex-col gap-1.5">
                           {o.bundle.map((comp) => {
                             const vid = componentVideo(comp.id);
@@ -178,7 +181,7 @@ const componentVideo = (id: string): string | undefined => {
                                     data-preview-type="video"
                                     data-poster={videoPoster(vid)}
                                     data-title={comp.label}
-                                    aria-label={`Previsualizar ${comp.label}`}
+                                    aria-label={`${t('previewAria')} ${comp.label}`}
                                   >
                                     <video
                                       data-src={videoPreview(vid)}
@@ -189,7 +192,7 @@ const componentVideo = (id: string): string | undefined => {
                                       playsinline
                                       preload="none"
                                     ></video>
-                                    <span class="absolute inset-0 grid place-items-center bg-ink/40 text-paper text-[10px] font-bold tracking-widest group-hover:bg-ink/60 transition-colors">Ver</span>
+                                    <span class="absolute inset-0 grid place-items-center bg-ink/40 text-paper text-[10px] font-bold tracking-widest group-hover:bg-ink/60 transition-colors">{t('previewBtn')}</span>
                                   </button>
                                 )}
                               </div>
@@ -204,10 +207,10 @@ const componentVideo = (id: string): string | undefined => {
 
                 {c.entornos && (
                   <label class="mt-4 flex items-center gap-3 text-sm font-medium">
-                    Cantidad de entornos
-                    <select class="entornos-select border-2 border-ink px-3 py-2 bg-paper" data-default={c.entornos.defaultValue} aria-label="Cantidad de entornos">
+                    {t('quantityEnvironments')}
+                    <select class="entornos-select border-2 border-ink px-3 py-2 bg-paper" data-default={c.entornos.defaultValue} aria-label={t('quantityEnvironments')}>
                       {Array.from({ length: c.entornos.max - c.entornos.min + 1 }, (_, n) => c.entornos!.min + n).map((n) => (
-                        <option value={n} selected={n === c.entornos!.defaultValue}>{n} {n === 1 ? 'entorno' : 'entornos'} (+USD {money(n * c.entornos!.priceEach)})</option>
+                        <option value={n} selected={n === c.entornos!.defaultValue}>{n} {n === 1 ? t('environment') : t('environmentsPlural')} (+USD {money(n * c.entornos!.priceEach)})</option>
                       ))}
                     </select>
                   </label>
@@ -220,13 +223,13 @@ const componentVideo = (id: string): string | undefined => {
 
       <aside class="flex flex-col gap-6 border-2 border-ink bg-paper p-6 lg:sticky lg:top-6">
         <div>
-          <label for="duration-slider" class="font-mono text-xs tracking-widest text-muted">DURACIÓN</label>
+          <label for="duration-slider" class="font-mono text-xs tracking-widest text-muted">{t('duration')}</label>
           <div class="flex items-baseline justify-between mt-2 mb-3">
             <output id="duration-value" for="duration-slider" class="text-3xl font-bold font-mono">2:00</output>
           </div>
           <input id="duration-slider" type="range" class="duration-range w-full" min={DURATION.minSec} max={DURATION.maxSec} step={DURATION.stepSec} value={DURATION.defaultSec} />
           <div class="mt-3 flex flex-wrap items-center gap-2">
-            <label for="duration-input" class="font-mono text-[10px] tracking-widest text-muted">ESCRIBIR</label>
+            <label for="duration-input" class="font-mono text-[10px] tracking-widest text-muted">{t('write')}</label>
             <input
               id="duration-input"
               type="text"
@@ -234,10 +237,10 @@ const componentVideo = (id: string): string | undefined => {
               autocomplete="off"
               enterkeyhint="done"
               placeholder="3:30"
-              aria-label="Escribir la duración en minutos y segundos"
+              aria-label="{t('write')} la duración en minutos y segundos"
               class="w-20 border-2 border-ink/20 px-2 py-1 font-mono text-sm outline-none focus:border-ink"
             />
-            <span class="text-[11px] text-muted">min:seg o minutos (ej. 3 o 3:30)</span>
+            <span class="text-[11px] text-muted">{t('durationHint')}</span>
           </div>
           <p class="text-xs text-muted mt-2">Base 2:00. ±USD 10 por cada 30s, se suma a cada servicio. No aplica a Extras.</p>
         </div>
