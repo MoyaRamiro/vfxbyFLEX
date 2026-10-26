@@ -102,7 +102,7 @@ const componentVideo = (id: string): string | undefined => {
             {c.groups.map((g) => (
               <fieldset class="group mb-6 last:mb-0" data-group={g.id} data-show-when={g.showWhen ?? ''} hidden={Boolean(g.showWhen)}>
                 <legend class="font-mono text-xs tracking-widest text-muted mb-3">{g.name.toUpperCase()}</legend>
-                <div class="flex flex-col gap-3" role={g.kind === 'single' ? 'radiogroup' : 'group'} aria-label={`${c.name} — ${g.name}`}>
+                <div class="flex flex-col gap-3" role={g.kind === 'single' ? 'radiogroup' : 'group'} aria-label={`${c.name} - ${g.name}`}>
                   {g.options.map((o) => (
                     <div class="option-item" data-option-item={o.id}>
                     <div class="option-row flex items-stretch gap-2" data-option-row={o.id}>

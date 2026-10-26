@@ -122,7 +122,7 @@ export function initDrawer(options: { lang?: Lang } = {}) {
       if (el) el.textContent = text;
     };
     setText('cart-subtotal', `USD ${money(totals.subtotal)}`);
-    setText('cart-discount', totals.hasPromo ? `-USD ${money(totals.savings)}` : '—');
+    setText('cart-discount', totals.hasPromo ? `-USD ${money(totals.savings)}` : '-');
     setText('cart-total', `USD ${money(totals.total)}`);
 
     const receiptHint = $('receipt-hint');
