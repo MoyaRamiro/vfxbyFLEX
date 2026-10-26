@@ -4,14 +4,18 @@ const lang = getLangFromUrl(Astro.url);
 const words = lang === 'en'
   ? ['VFX', 'VISUALIZERS', 'CHROMA', 'EDITING', 'REELS', 'COVERS', 'GLITCHES', 'ROTO', '3D AI']
   : ['VFX', 'VISUALIZERS', 'CROMA', 'MONTAJE', 'REELS', 'PORTADAS', 'GLITCHES', 'ROTO', 'IA 3D'];
-const strip = [...words, ...words];
+// Repeat enough copies so the strip always covers the viewport at any
+// point of the loop (even on wide screens). The count must stay even:
+// the animation shifts exactly one half of the strip (-50%).
+const REPEATS = 8;
+const strip = Array.from({ length: REPEATS }, () => words).flat();
 ---
 
 
 <div class="border-y-2 border-ink bg-lime overflow-hidden py-3" aria-hidden="true">
-  <div class="animate-marquee flex w-max gap-10 whitespace-nowrap font-bold text-xl">
+  <div class="animate-marquee flex w-max whitespace-nowrap font-bold text-xl">
     {strip.map((w) => (
-      <span class="flex items-center gap-10">{w}<span class="text-cyan">✦</span></span>
+      <span class="flex items-center gap-10 pr-10">{w}<span class="text-cyan">✦</span></span>
     ))}
   </div>
 </div>

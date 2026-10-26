@@ -48,8 +48,10 @@ body {
   from { transform: translateX(0); }
   to { transform: translateX(-50%); }
 }
+/* One copy of the strip takes 22s, so 4 copies (half of the 8 copies
+   rendered) take 88s. Keeps the same speed while looping seamlessly. */
 .animate-marquee {
-  animation: marquee 22s linear infinite;
+  animation: marquee 88s linear infinite;
 }
 
 .promo-stripes {
