@@ -26,6 +26,10 @@ import { promoActive } from './promo';
 import { buildMessage, buildWhatsAppUrl } from './whatsapp';
 import { SITE } from '../config/site';
 import { DURATION } from '../config/order';
+import { getClientLang } from '../i18n/labels';
+import { ui, type Lang } from '../i18n/utils';
+
+let currentLang: Lang = typeof document !== 'undefined' ? getClientLang() : 'es';
 
 // Convierte lo que escribe el cliente ("3", "3:30", "3,5") a segundos.
 export function parseDurationInput(raw: string): number | null {
@@ -125,6 +129,8 @@ function renderBundles(state: CartState) {
 
 export function renderConfigurator(state: CartState) {
   const active = promoActive();
+  const lang = currentLang;
+  const t = ui[lang];
 
   document.querySelectorAll<HTMLElement>('.group').forEach((g) => {
     const when = g.dataset.showWhen;
@@ -173,7 +179,7 @@ export function renderConfigurator(state: CartState) {
   applyOptionPrices(state, active);
 
   const wa = document.getElementById('wa-cta') as HTMLAnchorElement | null;
-  if (wa) wa.href = buildWhatsAppUrl(SITE.whatsapp, buildMessage(state, active));
+  if (wa) wa.href = buildWhatsAppUrl(SITE.whatsapp, buildMessage(state, active, lang));
 }
 
 function lineFromOption(
@@ -255,7 +261,8 @@ function initPreviewVideos() {
   videos.forEach((v) => io.observe(v));
 }
 
-export function initConfigurator() {
+export function initConfigurator(options: { lang?: Lang } = {}) {
+  if (options.lang) currentLang = options.lang;
   let state = loadCart();
   renderConfigurator(state);
   saveCart(state);
@@ -406,7 +413,7 @@ export function initConfigurator() {
       const isVideo = btn.dataset.previewType === 'video' || /\.(webm|mp4)$/i.test(raw);
       title.textContent = btn.dataset.title || '';
       if (!src) {
-        body.innerHTML = '<span class="text-muted text-sm">Sin previsualización disponible.</span>';
+        body.innerHTML = `<span class="text-muted text-sm">${t.noPreview}</span>`;
       } else if (isVideo) {
         body.innerHTML = `<video src="${src}"${poster ? ` poster="${poster}"` : ''} class="w-full h-full object-contain bg-ink" autoplay muted loop playsinline preload="auto" controls></video>`;
         void body.querySelector('video')?.play().catch(() => {});

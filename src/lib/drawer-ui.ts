@@ -12,8 +12,10 @@ import { cartTotals, durationAdjustment, formatDuration, lineTotal, money, senaA
 import { promoActive } from './promo';
 import { buildMessage, buildSenaMessage, buildWhatsAppUrl } from './whatsapp';
 import { SITE } from '../config/site';
-import { getBundle, getCategory } from '../data/catalog';
+import { getBundle, getCategory, CATEGORIES } from '../data/catalog';
 import { SENA, type WhatsAppMode } from '../config/order';
+import { getClientLang, localizeCatalog } from '../i18n/labels';
+import { ui, type Lang } from '../i18n/utils';
 
 function escapeHtml(s: string): string {
   return s
@@ -24,7 +26,11 @@ function escapeHtml(s: string): string {
     .replace(/'/g, '&#39;');
 }
 
-export function initDrawer() {
+export function initDrawer(options: { lang?: Lang } = {}) {
+  const lang = options.lang ?? getClientLang();
+  const t = (key: keyof typeof ui.es) => ui[lang][key];
+  const localCats = localizeCatalog(lang, CATEGORIES);
+  const catMap = new Map(localCats.map((c) => [c.id, c]));
   const store: { state: CartState } = { state: loadCart() };
   const $ = (id: string) => document.getElementById(id);
 
@@ -69,14 +75,15 @@ export function initDrawer() {
     const panel = $('cart-items');
     if (panel) {
       if (state.lines.length === 0) {
-        panel.innerHTML = '<p class="text-sm text-muted">Tu carrito está vacío. Elegí servicios en el configurador.</p>';
+        panel.innerHTML = `<p class="text-sm text-muted">${t('emptyCart')}</p>`;
       } else {
         panel.innerHTML = state.lines
           .map((line) => {
-            const cat = getCategory(line.categoryId);
+            const cat = catMap.get(line.categoryId) ?? getCategory(line.categoryId);
+            const localizedLabel = cat?.groups.flatMap((g) => g.options).find((o) => o.id === line.optionId)?.label ?? line.label;
             const price = lineTotal(line, active, durationAdjustment(state.durationSec));
             const promoTag = line.promo && active ? ' <span class="text-green-700 font-mono">-30%</span>' : '';
-            const entornos = line.entornos ? ` · ${line.entornos} entorno${line.entornos === 1 ? '' : 's'}` : '';
+            const entornos = line.entornos ? ` · ${line.entornos} ${line.entornos === 1 ? t('environment') : t('environmentsPlural')}` : '';
             const bundle = getBundle(line.categoryId, line.optionId);
             let detail = '';
             if (bundle) {
@@ -84,19 +91,19 @@ export function initDrawer() {
               const chosen = line.components?.length ?? 0;
               detail =
                 chosen < total
-                  ? ` · ${chosen}/${total} componentes`
-                  : ' · todos los componentes';
+                  ? ` · ${t('componentsOf').replace('{chosen}', String(chosen)).replace('{total}', String(total))}`
+                  : ` · ${t('allComponents')}`;
             } else if (line.addons && line.addons.length) {
               detail = ` + ${line.addons.map((a) => escapeHtml(a.label)).join(', ')}`;
             }
             return `<div class="flex items-center justify-between gap-3 border-2 border-ink/20 p-3">
               <div class="min-w-0">
-                <p class="font-bold truncate">${escapeHtml(line.label)}</p>
+                <p class="font-bold truncate">${escapeHtml(localizedLabel)}</p>
                 <p class="text-xs text-muted">${escapeHtml(cat?.name ?? line.categoryId)}${entornos}${detail}${promoTag}</p>
               </div>
               <div class="flex items-center gap-2 shrink-0">
                 <span class="font-mono">USD ${money(price)}</span>
-                <button type="button" class="remove-line border-2 border-ink/30 w-8 h-8 font-bold hover:bg-ink hover:text-paper transition-colors" data-key="${escapeHtml(line.key)}" aria-label="Quitar">✕</button>
+                <button type="button" class="remove-line border-2 border-ink/30 w-8 h-8 font-bold hover:bg-ink hover:text-paper transition-colors" data-key="${escapeHtml(line.key)}" aria-label="${lang === 'en' ? 'Remove' : 'Quitar'}">✕</button>
               </div>
             </div>`;
           })
@@ -127,11 +134,9 @@ export function initDrawer() {
       senaBtn.disabled = disabled;
       senaBtn.classList.toggle('opacity-40', disabled);
       senaBtn.classList.toggle('pointer-events-none', disabled);
-      // La seña es el 10% del total del pedido.
       if (SENA.rate !== null) {
-        senaBtn.textContent = disabled
-          ? `Señar · ${Math.round(SENA.rate * 100)}%`
-          : `Señar · USD ${money(senaAmount(totals.total))}`;
+        const pct = Math.round(SENA.rate * 100);
+        senaBtn.textContent = disabled ? t('depositBtn').replace('{pct}', String(pct)) : t('depositAmountBtn').replace('{amount}', money(senaAmount(totals.total)));
       }
     }
 
@@ -170,11 +175,11 @@ export function initDrawer() {
   });
   $('cart-wa')?.addEventListener('click', (e) => {
     e.preventDefault();
-    window.location.href = buildWhatsAppUrl(SITE.whatsapp, buildMessage(store.state, promoActive()));
+    window.location.href = buildWhatsAppUrl(SITE.whatsapp, buildMessage(store.state, promoActive(), lang));
   });
   $('cart-sena')?.addEventListener('click', (e) => {
     e.preventDefault();
-    window.location.href = buildWhatsAppUrl(SITE.whatsapp, buildSenaMessage(store.state, promoActive()));
+    window.location.href = buildWhatsAppUrl(SITE.whatsapp, buildSenaMessage(store.state, promoActive(), lang));
   });
   const ig = $('customer-ig') as HTMLInputElement | null;
   ig?.addEventListener('input', () => {

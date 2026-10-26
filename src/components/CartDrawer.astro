@@ -7,13 +7,11 @@ const t = useTranslations(lang);
 
 const SENA_PCT = Math.round((SENA.rate ?? 0) * 100);
 
-const modesEs = Object.values(WHATSAPP_MODES);
-const modesEn = [
-  { id: 'full', label: 'Full quote', intro: 'Send the full order with details.' },
-  { id: 'quick', label: 'Quick quote', intro: 'Send a short summary to get started.' },
-  { id: 'deposit', label: 'Deposit only', intro: 'Prioritize paying the deposit to reserve the slot.' },
-];
-const modes = lang === 'en' ? modesEn : modesEs;
+const modes = Object.values(WHATSAPP_MODES).map((m) => ({
+  id: m.id,
+  label: lang === 'en' ? (m.id === 'chat' ? t('modeChatLabel') : t('modeReceiptLabel')) : m.label,
+  intro: lang === 'en' ? (m.id === 'chat' ? t('modeChatIntro') : t('modeReceiptIntro')) : m.intro,
+}));
 ---
 <button
   type="button"
@@ -66,7 +64,7 @@ const modes = lang === 'en' ? modesEn : modesEs;
     <div class="flex flex-col gap-4">
       <div>
         <label class="block font-mono text-xs text-muted mb-2">{t('instagramOptional')}</label>
-        <input id="customer-ig" type="text" class="w-full border-2 border-ink px-3 py-2" placeholder="@usuario" />
+        <input id="customer-ig" type="text" class="w-full border-2 border-ink px-3 py-2" placeholder={t('instagramPlaceholder')} />
       </div>
       <div>
         <label class="block font-mono text-xs text-muted mb-2">{t('notes')}</label>
@@ -92,7 +90,7 @@ const modes = lang === 'en' ? modesEn : modesEs;
           {t('receiptText')}
         </p>
       </div>
-      <p class="text-xs text-muted">{AUDIO_NOTE}</p>
+      <p class="text-xs text-muted">{t('audioNote')}</p>
     </div>
   </div>
 

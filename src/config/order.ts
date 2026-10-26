@@ -46,11 +46,13 @@ export const WHATSAPP_MODES = {
     id: 'chat',
     label: 'Mandar pedido y charlarlo por WhatsApp',
     intro: 'Mandé el pedido para charlarlo y definir detalles.',
+    introKey: 'modeChatIntro',
   },
   receipt: {
     id: 'receipt',
     label: 'Enviar comprobante junto con el pedido',
     intro: 'Mandé el pedido + comprobante para seguir con el proceso.',
+    introKey: 'modeReceiptIntro',
   },
 } as const;
 

@@ -7,8 +7,11 @@ import croma from '../assets/projects/croma.png';
 import vfxPro from '../assets/projects/vfx-pro.png';
 import montaje from '../assets/projects/montaje.png';
 import { getLangFromUrl, useTranslations } from '../i18n/utils';
+import { localizeCatalog, localizeMoods } from '../i18n/labels';
 const lang = getLangFromUrl(Astro.url);
 const t = useTranslations(lang);
+const categories = localizeCatalog(lang, CATEGORIES);
+const moods = localizeMoods(lang);
 
 const previews: Record<string, string> = {
   visual: visualizer.src,
@@ -75,7 +78,7 @@ const componentVideo = (id: string): string | undefined => {
     <div class="grid lg:grid-cols-[minmax(0,1fr)_300px] gap-8 items-start">
       <div class="min-w-0">
         <div role="tablist" aria-label={t('categoriesAria')} class="flex flex-wrap gap-2 mb-6">
-          {CATEGORIES.map((c, i) => (
+          {categories.map((c, i) => (
             <button
               type="button"
               role="tab"
@@ -89,7 +92,7 @@ const componentVideo = (id: string): string | undefined => {
           ))}
         </div>
 
-        {CATEGORIES.map((c, i) => (
+        {categories.map((c, i) => (
           <div id={`panel-${c.id}`} class="cat-panel border-2 border-ink bg-paper p-6" data-panel={c.id} role="tabpanel" aria-label={c.name} hidden={i !== 0}>
             <header class="mb-5">
               <h3 class="text-2xl font-bold">{c.name}</h3>
@@ -248,7 +251,7 @@ const componentVideo = (id: string): string | undefined => {
         <div>
           <span class="font-mono text-xs tracking-widest text-muted">{t('mood')}</span>
           <div class="flex flex-col gap-2 mt-3" role="radiogroup" aria-label={t('mood')}>
-            {MOODS.map((m) => (
+            {moods.map((m) => (
               <button type="button" class="mood-btn border-2 border-ink/20 px-3 py-2 text-left text-sm font-medium hover:border-ink transition-colors" data-mood={m.id} role="radio" aria-checked="false">
                 {m.label}
               </button>
