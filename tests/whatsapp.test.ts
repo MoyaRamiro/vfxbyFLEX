@@ -57,6 +57,42 @@ describe('whatsapp', () => {
     expect(msg).not.toContain('Enviar pedido');
   });
 
+  it('lists every chosen service and extra with its price in the seña message', () => {
+    let c = emptyCart();
+    c = toggleLine(c, {
+      key: 'visual:visual-tipo', categoryId: 'visual', groupId: 'visual-tipo',
+      optionId: 'visual-only-lyrics', label: 'Only Lyrics', base: 57,
+    }, true);
+    c = toggleLine(c, {
+      key: 'extras:extras-servicios', categoryId: 'extras', groupId: 'extras-servicios',
+      optionId: 'extra-reel', label: 'Reel', base: 3,
+    }, true);
+    const msg = buildSenaMessage(c, true);
+    expect(msg).toContain('SERVICIOS:');
+    expect(msg).toContain('[Visual] Only Lyrics - USD 57');
+    expect(msg).toContain('EXTRAS:');
+    expect(msg).toContain('[Extras] Reel - USD 3');
+    expect(msg).toContain('Total del pedido: USD 60');
+    expect(msg).toContain('Seña (10%): USD 6');
+  });
+
+  it('uses only safe ASCII markers: no emojis, em dashes or bullets', () => {
+    let c = emptyCart();
+    c = setDuration(c, 210);
+    c = { ...c, mode: 'receipt', sena: true, customer: { ...c.customer, instagram: '@ddd', notes: 'Prueba' } };
+    c = toggleLine(c, {
+      key: 'vfx:vfx-paquete', categoryId: 'vfx', groupId: 'vfx-paquete',
+      optionId: 'vfx-full', label: 'VFX Full', base: 199, promo: true,
+    }, true);
+
+    for (const msg of [buildMessage(c, true), buildSenaMessage(c, true), buildMessage(c, true, 'en'), buildSenaMessage(c, true, 'en')]) {
+      expect([...msg].some((ch) => ch.codePointAt(0)! > 0xffff)).toBe(false);
+      expect(msg).not.toContain('—');
+      expect(msg).not.toContain('•');
+      expect(msg).not.toContain('\uFFFD');
+    }
+  });
+
   it('warns to send the receipt by WhatsApp in receipt mode', () => {
     let c = emptyCart();
     c = { ...c, mode: 'receipt' };

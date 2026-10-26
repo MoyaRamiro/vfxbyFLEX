@@ -44,11 +44,11 @@ function formatLine(line: CartLine, state: CartState, promoActive: boolean, lang
     ? fill(line.entornos === 1 ? t.waEnvOne : t.waEnvMany, { count: String(line.entornos) })
     : '';
   const addons = line.addons && line.addons.length > 0 ? ` + ${line.addons.map((a) => a.label).join(', ')}` : '';
-  let suffix = `— USD ${money(price)}`;
+  let suffix = `- USD ${money(price)}`;
   if (line.promo && promoActive && !getBundle(line.categoryId, line.optionId)) {
     suffix += fill(t.waBefore, { amount: money(lineOriginal(line, adj, promoActive)) });
   }
-  return `• [${categoryName}] ${localLabel}${entornos}${bundleSummary(line, lang)}${addons} ${suffix}`;
+  return `- [${categoryName}] ${localLabel}${entornos}${bundleSummary(line, lang)}${addons} ${suffix}`;
 }
 
 export function buildMessage(state: CartState, promoActive: boolean, lang: Lang = defaultLang): string {
@@ -92,7 +92,7 @@ export function buildMessage(state: CartState, promoActive: boolean, lang: Lang 
 
   lines.push('');
   lines.push(fill(t.waSong, { note: lang === 'en' ? 'WAV master preferred.' : AUDIO_NOTE }));
-  lines.push(`💬 ${t[WHATSAPP_MODES[state.mode].introKey]}`);
+  lines.push(t[WHATSAPP_MODES[state.mode].introKey]);
   if (state.mode === 'receipt') {
     lines.push(t.waReceipt);
   }
@@ -104,9 +104,12 @@ export function buildMessage(state: CartState, promoActive: boolean, lang: Lang 
   return lines.join('\n');
 }
 
-// Short message for clients that only want to pay the deposit (10% of the total).
+// Message for clients that want to pay the deposit (10% of the total).
+// It repeats the chosen services so the order is unambiguous on WhatsApp.
 export function buildSenaMessage(state: CartState, promoActive: boolean, lang: Lang = defaultLang): string {
   const t = ui[lang];
+  const services = state.lines.filter((l) => l.categoryId !== 'extras');
+  const extras = state.lines.filter((l) => l.categoryId === 'extras');
   const totals = cartTotals(state, promoActive);
   const amount = senaAmount(totals.total);
   const lines: string[] = [];
@@ -115,9 +118,22 @@ export function buildSenaMessage(state: CartState, promoActive: boolean, lang: L
     lines.push(fill(t.waInstagram, { handle: state.customer.instagram.trim().replace(/^@/, '') }));
   }
   lines.push('');
-  lines.push(fill(t.waDepositAmount, { amount: money(amount) }));
   lines.push(fill(t.waDuration, { value: formatDuration(state.durationSec) }));
+
+  if (services.length > 0) {
+    lines.push('');
+    lines.push(t.waServices);
+    for (const l of services) lines.push(formatLine(l, state, promoActive, lang));
+  }
+  if (extras.length > 0) {
+    lines.push('');
+    lines.push(t.waExtras);
+    for (const l of extras) lines.push(formatLine(l, state, promoActive, lang));
+  }
+
+  lines.push('');
   lines.push(fill(t.waOrderTotal, { amount: money(totals.total) }));
+  lines.push(fill(t.waDepositAmount, { amount: money(amount) }));
   lines.push('');
   lines.push(t.waReserve);
   return lines.join('\n');

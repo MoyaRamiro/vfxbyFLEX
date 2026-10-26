@@ -42,6 +42,7 @@ const optionKeys: Record<string, Key> = {
   'extra-rodaje': 'optExtraRodaje',
   'extra-visuales-show': 'optExtraVisualesShow',
   'extra-portada': 'optExtraPortada',
+  'extra-quitar-marca': 'optExtraQuitarMarca',
 };
 
 const noteKeys: Record<string, Key> = {

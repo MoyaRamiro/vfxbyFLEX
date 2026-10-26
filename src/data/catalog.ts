@@ -162,6 +162,7 @@ export const CATEGORIES: Category[] = [
           { id: 'extra-rodaje', label: 'Rodaje (Mar del Plata)', price: 35 },
           { id: 'extra-visuales-show', label: 'Visuales para show', price: 55 },
           { id: 'extra-portada', label: 'Portada', price: 30 },
+          { id: 'extra-quitar-marca', label: 'Quitar marca de agua / tag', price: 10 },
         ],
       },
     ],
