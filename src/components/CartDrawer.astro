@@ -16,7 +16,6 @@ const modes = Object.values(WHATSAPP_MODES).map((m) => ({
 <button
   type="button"
   class="cart-fab cart-trigger group fixed right-4 sm:right-6 bottom-[max(1rem,env(safe-area-inset-bottom))] z-[75] flex items-center gap-3 border-2 border-ink bg-lime text-ink px-4 sm:px-5 py-3 sm:py-3.5 font-bold shadow-[0_12px_32px_rgba(10,10,10,0.30)] hover:bg-ink hover:text-paper transition-[background-color,color,opacity] duration-200"
-  aria-label={t('openCartAria')}
 >
   <span class="relative inline-flex items-center justify-center">
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -34,7 +33,7 @@ const modes = Object.values(WHATSAPP_MODES).map((m) => ({
 
 <div id="cart-backdrop" class="fixed inset-0 z-[80] bg-ink/50 transition-opacity opacity-0 pointer-events-none"></div>
 
-<aside id="cart-drawer" class="fixed inset-y-0 right-0 z-[90] w-full sm:w-[420px] border-l-2 border-ink bg-paper flex flex-col transition-transform duration-300 translate-x-full pointer-events-none" aria-hidden="true" aria-label={t('cart')}>
+<aside id="cart-drawer" class="fixed inset-y-0 right-0 z-[90] w-full sm:w-[420px] border-l-2 border-ink bg-paper flex flex-col transition-transform duration-300 translate-x-full pointer-events-none" aria-hidden="true" aria-label={t('cart')} inert>
   <header class="flex items-center justify-between gap-4 border-b-2 border-ink p-5">
     <div>
       <p class="font-mono text-xs text-muted">{t('cart')}</p>
@@ -63,15 +62,15 @@ const modes = Object.values(WHATSAPP_MODES).map((m) => ({
 
     <div class="flex flex-col gap-4">
       <div>
-        <label class="block font-mono text-xs text-muted mb-2">{t('instagramOptional')}</label>
+        <label for="customer-ig" class="block font-mono text-xs text-muted mb-2">{t('instagramOptional')}</label>
         <input id="customer-ig" type="text" class="w-full border-2 border-ink px-3 py-2" placeholder={t('instagramPlaceholder')} />
       </div>
       <div>
-        <label class="block font-mono text-xs text-muted mb-2">{t('notes')}</label>
+        <label for="customer-notes" class="block font-mono text-xs text-muted mb-2">{t('notes')}</label>
         <textarea id="customer-notes" class="w-full border-2 border-ink px-3 py-2 min-h-[90px]" placeholder={t('notesPlaceholder')}></textarea>
       </div>
-      <div>
-        <span class="block font-mono text-xs text-muted mb-2">{t('whatsappMode')}</span>
+      <fieldset>
+        <legend class="block font-mono text-xs text-muted mb-2">{t('whatsappMode')}</legend>
         <div class="flex flex-col gap-2">
           {modes.map((m) => (
             <label class="flex items-start gap-2 text-sm">
@@ -83,7 +82,7 @@ const modes = Object.values(WHATSAPP_MODES).map((m) => ({
             </label>
           ))}
         </div>
-      </div>
+      </fieldset>
       <div id="receipt-hint" class="border-2 border-ink/20 px-4 py-3 hidden">
         <p class="font-bold text-sm">{t('receipt')}</p>
         <p class="text-xs text-muted mt-1">

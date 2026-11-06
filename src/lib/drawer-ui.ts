@@ -38,6 +38,8 @@ export function initDrawer(options: { lang?: Lang } = {}) {
   const backdrop = $('cart-backdrop');
   const fab = document.querySelector<HTMLElement>('.cart-fab');
   let lastCount = -1;
+  let isOpen = false;
+  let lastFocus: HTMLElement | null = null;
 
   const bumpFab = () => {
     if (!fab) return;
@@ -48,18 +50,29 @@ export function initDrawer(options: { lang?: Lang } = {}) {
   fab?.addEventListener('animationend', () => fab.classList.remove('cart-bump'));
 
   const open = () => {
+    if (isOpen) return;
+    isOpen = true;
+    lastFocus = document.activeElement as HTMLElement | null;
+    // `inert` takes the hidden drawer out of the tab order and the
+    // accessibility tree, so aria-hidden no longer hides focusable content.
+    drawer?.removeAttribute('inert');
     drawer?.classList.remove('translate-x-full', 'pointer-events-none');
     drawer?.setAttribute('aria-hidden', 'false');
     backdrop?.classList.remove('opacity-0', 'pointer-events-none');
     fab?.classList.add('opacity-0', 'pointer-events-none');
     document.body.style.overflow = 'hidden';
+    window.setTimeout(() => ($('cart-close') as HTMLElement | null)?.focus(), 0);
   };
   const close = () => {
+    if (!isOpen) return;
+    isOpen = false;
     drawer?.classList.add('translate-x-full', 'pointer-events-none');
     drawer?.setAttribute('aria-hidden', 'true');
+    drawer?.setAttribute('inert', '');
     backdrop?.classList.add('opacity-0', 'pointer-events-none');
     fab?.classList.remove('opacity-0', 'pointer-events-none');
     document.body.style.overflow = '';
+    lastFocus?.focus();
   };
   const persist = () => {
     saveCart(store.state);

@@ -144,7 +144,7 @@ const componentVideo = (id: string): string | undefined => {
                           data-preview-type={optionVideos[o.id] ? 'video' : 'image'}
                           data-poster={optionVideos[o.id] ? videoPoster(optionVideos[o.id]) : undefined}
                           data-title={`${c.name} · ${o.label}`}
-                          aria-label={`${t('previewAria')} ${o.label}`}
+                          aria-label={`${t('previewBtn')} ${o.label}`}
                         >
                           {optionVideos[o.id] ? (
                             <video
@@ -184,7 +184,7 @@ const componentVideo = (id: string): string | undefined => {
                                     data-preview-type="video"
                                     data-poster={videoPoster(vid)}
                                     data-title={comp.label}
-                                    aria-label={`${t('previewAria')} ${comp.label}`}
+                                    aria-label={`${t('previewBtn')} ${comp.label}`}
                                   >
                                     <video
                                       data-src={videoPreview(vid)}
@@ -278,7 +278,7 @@ const componentVideo = (id: string): string | undefined => {
     <button type="button" id="preview-backdrop" class="absolute inset-0 bg-ink/70 cursor-default" aria-label={t('closePreviewAria')} tabindex="-1"></button>
     <div class="relative mx-auto mt-[10vh] w-[min(92vw,720px)] border-2 border-ink bg-paper p-4">
       <div class="flex items-center justify-between gap-4 mb-3">
-        <h4 id="preview-title" class="font-bold"></h4>
+        <h4 id="preview-title" class="font-bold">{t('modalTitle')}</h4>
         <button type="button" id="preview-close" class="border-2 border-ink w-10 h-10 font-bold hover:bg-ink hover:text-paper transition-colors" aria-label={t('close')}>✕</button>
       </div>
       <div id="preview-body" class="aspect-video bg-surface border-2 border-ink/10 flex items-center justify-center overflow-hidden"></div>

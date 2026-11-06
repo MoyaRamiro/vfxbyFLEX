@@ -11,10 +11,12 @@ import { SITE } from '../config/site';
 
 <Base title={`${SITE.title} · Configurador`} description="Armá tu pedido de VFX y mandalo por WhatsApp en 1 minuto." lang="es">
   <Hero />
-  <Recomendados />
-  <Configurador />
+  <main id="main" tabindex="-1">
+    <Recomendados />
+    <Configurador />
+    <Marquee />
+  </main>
   <CartDrawer />
-  <Marquee />
   <Footer />
 
   <script>
