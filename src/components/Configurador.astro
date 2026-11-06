@@ -132,7 +132,7 @@ const componentVideo = (id: string): string | undefined => {
                           )}
                           <span class="option-now font-mono font-bold" data-price={o.price} data-promo={o.promo ? '1' : '0'}>USD {money(o.price)}</span>
                           {o.promo && (
-                            <span class="option-badge bg-lime text-ink text-[10px] font-bold px-1.5 py-0.5 leading-none">{t('discountBadge')}</span>
+                            <span class="option-badge bg-lime text-ink text-xs font-bold px-1.5 py-0.5 leading-none">{t('discountBadge')}</span>
                           )}
                         </span>
                       </button>
@@ -165,7 +165,7 @@ const componentVideo = (id: string): string | undefined => {
                     </div>
                     {o.bundle && (
                       <div class="bundle-panel mt-2 border-2 border-ink/20 bg-surface p-3" data-bundle-panel={o.id} hidden>
-                        <p class="font-mono text-[10px] tracking-widest text-muted mb-2">{t('componentsIncluded').toUpperCase()}</p>
+                        <p class="font-mono text-xs tracking-widest text-muted mb-2">{t('componentsIncluded').toUpperCase()}</p>
                         <div class="flex flex-col gap-1.5">
                           {o.bundle.map((comp) => {
                             const vid = componentVideo(comp.id);
@@ -195,7 +195,7 @@ const componentVideo = (id: string): string | undefined => {
                                       playsinline
                                       preload="none"
                                     ></video>
-                                    <span class="absolute inset-0 grid place-items-center bg-ink/40 text-paper text-[10px] font-bold tracking-widest group-hover:bg-ink/60 transition-colors">{t('previewBtn')}</span>
+                                    <span class="absolute inset-0 grid place-items-center bg-ink/40 text-paper text-xs font-bold tracking-widest group-hover:bg-ink/60 transition-colors">{t('previewBtn')}</span>
                                   </button>
                                 )}
                               </div>
@@ -233,7 +233,7 @@ const componentVideo = (id: string): string | undefined => {
           </div>
           <input id="duration-slider" type="range" class="duration-range w-full" min={DURATION.minSec} max={DURATION.maxSec} step={DURATION.stepSec} value={DURATION.defaultSec} />
           <div class="flex items-center gap-2 mt-3">
-            <label for="duration-input" class="font-mono text-[10px] tracking-widest text-muted">{t('write')}</label>
+            <label for="duration-input" class="font-mono text-xs tracking-widest text-muted">{t('write')}</label>
             <input
               id="duration-input"
               type="text"
