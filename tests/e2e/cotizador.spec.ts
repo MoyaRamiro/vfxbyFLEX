@@ -96,11 +96,101 @@ test('typed duration moves the slider and updates prices', async ({ page }) => {
   await expect(input).toHaveValue('2:30');
 });
 
-test('preset card pre-arms the order and opens the drawer', async ({ page }) => {
+test('preset card pre-arms the order and scrolls to the duration block without opening the drawer', async ({ page }) => {
   await page.goto('/');
   await page.locator('.preset-card[data-preset="visual-25d"]').click();
-  await expect(page.locator('#cart-drawer')).toHaveAttribute('aria-hidden', 'false');
+
+  // The drawer stays closed and the client lands on the duration selector.
+  await expect(page.locator('#cart-drawer')).toHaveAttribute('aria-hidden', 'true');
+  await expect(page.locator('#duration-block')).toBeInViewport();
+  await expect(page.locator('#duration-slider')).toBeVisible();
   await expect(page.locator('#cart-total')).toContainText('45');
+});
+
+test('croma full preset selects 2.5D/3D with 4 fixed environments', async ({ page }) => {
+  await page.goto('/');
+  await page.locator('.preset-card[data-preset="croma-full-4"]').click();
+
+  await expect(page.locator('.cat-tab[data-category="croma"]')).toHaveAttribute('aria-selected', 'true');
+  await expect(page.locator('.option-btn[data-option="croma-25d-3d"]')).toHaveAttribute('aria-checked', 'true');
+
+  const select = page.locator('.cat-panel[data-panel="croma"] .entornos-select');
+  await expect(select).toHaveValue('4');
+  await expect(select).toBeDisabled();
+  // 119 (2.5D y 3D) + 4 entornos × USD 10 = USD 159
+  await expect(page.locator('#cart-total')).toContainText('159');
+});
+
+test('environments selector is enabled only for the first two croma options', async ({ page }) => {
+  await page.goto('/');
+  await page.locator('.cat-tab[data-category="croma"]').click();
+  const select = page.locator('.cat-panel[data-panel="croma"] .entornos-select');
+
+  // Nothing selected yet: the selector is locked.
+  await expect(select).toBeDisabled();
+  await expect(select).toHaveValue('0');
+
+  await page.locator('.option-btn[data-option="croma-25d-3d"]').click();
+  await expect(select).toBeEnabled();
+  await expect(select).toHaveValue('1');
+
+  await page.locator('.option-btn[data-option="croma-mezclado"]').click();
+  await expect(select).toBeEnabled();
+
+  await page.locator('.option-btn[data-option="croma-video-full"]').click();
+  await expect(select).toBeDisabled();
+  await expect(select).toHaveValue('0');
+
+  await page.locator('.option-btn[data-option="croma-2d"]').click();
+  await expect(select).toBeDisabled();
+
+  await page.locator('.option-btn[data-option="croma-25d-3d"]').click();
+  await expect(select).toBeEnabled();
+  await expect(select).toHaveValue('1');
+});
+
+test('changing environments updates the cart total', async ({ page }) => {
+  await page.goto('/');
+  await page.locator('.cat-tab[data-category="croma"]').click();
+  await page.locator('.option-btn[data-option="croma-25d-3d"]').click();
+
+  const select = page.locator('.cat-panel[data-panel="croma"] .entornos-select');
+  await select.selectOption('4');
+  await expect(page.locator('#cart-total')).toContainText('159');
+});
+
+test('notes typed in the cart reach the WhatsApp order message', async ({ page }) => {
+  await page.goto('/');
+  await page.locator('.cat-tab[data-category="visual"]').click();
+  await page.locator('.option-btn[data-option="visual-only-lyrics"]').click();
+  await page.locator('.cart-trigger').first().click();
+  await page.locator('#customer-notes').fill('Quiero estilo nocturno');
+
+  await page.route('https://wa.me/**', (route) =>
+    route.fulfill({ status: 200, contentType: 'text/html', body: '<!doctype html><title>wa</title>' })
+  );
+  const [request] = await Promise.all([
+    page.waitForRequest((req) => req.url().startsWith('https://wa.me/')),
+    page.locator('#cart-wa').click(),
+  ]);
+  expect(decodeURIComponent(request.url())).toContain('"Quiero estilo nocturno"');
+});
+
+test('notes typed in the cart reach the WhatsApp deposit message', async ({ page }) => {
+  await page.goto('/');
+  await page.locator('.cat-tab[data-category="visual"]').click();
+  await page.locator('.option-btn[data-option="visual-only-lyrics"]').click();
+  await page.locator('.cart-trigger').first().click();
+  await page.locator('#customer-notes').fill('Quiero estilo nocturno');
+
+  await page.route('https://wa.me/**', (route) =>
+    route.fulfill({ status: 200, contentType: 'text/html', body: '<!doctype html><title>wa</title>' })
+  );
+  const [request] = await Promise.all([
+    page.waitForRequest((req) => req.url().startsWith('https://wa.me/')),
+    page.locator('#cart-sena').click(),
+  ]);
+  expect(decodeURIComponent(request.url())).toContain('"Quiero estilo nocturno"');
 });
 
 test('preview opens the matching hd video', async ({ page }) => {

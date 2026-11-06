@@ -131,6 +131,12 @@ export function buildSenaMessage(state: CartState, promoActive: boolean, lang: L
     for (const l of extras) lines.push(formatLine(l, state, promoActive, lang));
   }
 
+  if (state.customer.notes.trim()) {
+    lines.push('');
+    lines.push(t.waNotes);
+    lines.push(`"${state.customer.notes.trim()}"`);
+  }
+
   lines.push('');
   lines.push(fill(t.waOrderTotal, { amount: money(totals.total) }));
   lines.push(fill(t.waDepositAmount, { amount: money(amount) }));

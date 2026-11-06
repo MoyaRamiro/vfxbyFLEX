@@ -6,6 +6,7 @@ const t = useTranslations(lang);
 const cardsEs = [
   {
     preset: 'croma-full-4',
+    categoryId: 'croma',
     title: 'Croma Full · 4 entornos',
     category: 'CROMA',
     tags: ['Croma', '3D'],
@@ -14,6 +15,7 @@ const cardsEs = [
   },
   {
     preset: 'vfx-full-all',
+    categoryId: 'vfx',
     title: 'VFX Full',
     category: 'VFX',
     tags: ['VFX'],
@@ -22,6 +24,7 @@ const cardsEs = [
   },
   {
     preset: 'visual-25d',
+    categoryId: 'visual',
     title: 'Visual con imagen 2.5D',
     category: 'VISUAL',
     tags: ['Visual'],
@@ -33,6 +36,7 @@ const cardsEs = [
 const cardsEn = [
   {
     preset: 'croma-full-4',
+    categoryId: 'croma',
     title: 'Chroma Full · 4 environments',
     category: 'CHROMA',
     tags: ['Chroma', '3D'],
@@ -41,6 +45,7 @@ const cardsEn = [
   },
   {
     preset: 'vfx-full-all',
+    categoryId: 'vfx',
     title: 'VFX Full',
     category: 'VFX',
     tags: ['VFX'],
@@ -49,6 +54,7 @@ const cardsEn = [
   },
   {
     preset: 'visual-25d',
+    categoryId: 'visual',
     title: '2.5D Image Visual',
     category: 'VISUAL',
     tags: ['Visual'],
@@ -73,6 +79,7 @@ const cards = lang === 'en' ? cardsEn : cardsEs;
           type="button"
           class="preset-card group flex flex-col border-2 border-ink bg-paper overflow-hidden hover:border-lime transition-colors text-left"
           data-preset={p.preset}
+          data-category={p.categoryId}
         >
           <div class="flex items-center justify-between border-b-2 border-ink px-3 py-2">
             <span class="font-mono text-xs font-bold tracking-widest">{p.category}</span>

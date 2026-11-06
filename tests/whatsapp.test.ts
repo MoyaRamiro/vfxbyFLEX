@@ -76,6 +76,20 @@ describe('whatsapp', () => {
     expect(msg).toContain('Seña (10%): USD 6');
   });
 
+  it('includes the customer notes in both the order and the seña messages', () => {
+    let c = emptyCart();
+    c = toggleLine(c, {
+      key: 'visual:visual-tipo', categoryId: 'visual', groupId: 'visual-tipo',
+      optionId: 'visual-only-lyrics', label: 'Only Lyrics', base: 57,
+    }, true);
+    c = { ...c, customer: { ...c.customer, notes: 'Quiero estilo nocturno' } };
+
+    for (const msg of [buildMessage(c, true), buildSenaMessage(c, true)]) {
+      expect(msg).toContain('NOTAS:');
+      expect(msg).toContain('"Quiero estilo nocturno"');
+    }
+  });
+
   it('uses only safe ASCII markers: no emojis, em dashes or bullets', () => {
     let c = emptyCart();
     c = setDuration(c, 210);

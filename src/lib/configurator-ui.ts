@@ -8,6 +8,7 @@ import {
   setDuration,
   setMood,
   setEntornos,
+  setEntornosLocked,
   setComponents,
   isSelected,
   lineKey,
@@ -18,6 +19,7 @@ import {
   groupOfOption,
   isExtra,
   getCategory,
+  optionSupportsEntornos,
   type CategoryId,
   type CatalogOption,
 } from '../data/catalog';
@@ -172,7 +174,16 @@ export function renderConfigurator(state: CartState) {
     const select = panel.querySelector<HTMLSelectElement>('.entornos-select');
     if (!catId || !select) return;
     const line = state.lines.find((l) => l.categoryId === catId);
-    select.value = String(line?.entornos ?? Number(select.dataset.default || select.value));
+    const fallback = Number(select.dataset.default || 1);
+    let count = 0;
+    let disabled = true;
+    if (line && optionSupportsEntornos(catId, line.optionId)) {
+      count = line.entornos && line.entornos > 0 ? line.entornos : fallback;
+      disabled = line.entornosLocked === true;
+    }
+    select.value = String(count);
+    select.disabled = disabled;
+    select.setAttribute('aria-disabled', disabled ? 'true' : 'false');
   });
 
   renderBundles(state);
@@ -201,28 +212,44 @@ function lineFromOption(
   };
 }
 
+// Selects a preset option, replacing whatever was chosen in that group.
+// Presets are idempotent: clicking the same card twice keeps it selected.
+function withSelectedOption(
+  state: CartState,
+  catId: CategoryId,
+  groupId: string,
+  option: CatalogOption
+): CartState {
+  const line = lineFromOption(catId, groupId, option, 'single');
+  const rest = state.lines.filter((l) => !(l.categoryId === catId && l.groupId === groupId));
+  return { ...state, lines: [...rest, line] };
+}
+
 // Recomendados cards: armá un pedido pre-armado de un golpe.
 function applyPreset(state: CartState, preset: string): CartState {
   let next = state;
   if (preset === 'croma-full-4') {
     const cat = getCategory('croma');
-    const opt = cat?.groups[0]?.options.find((o) => o.id === 'croma-video-full');
+    const opt = cat?.groups[0]?.options.find((o) => o.id === 'croma-25d-3d');
     const groupId = cat?.groups[0]?.id ?? 'croma-modalidad';
     if (opt) {
-      next = toggleLine(next, lineFromOption('croma', groupId, opt, 'single'), true);
+      next = withSelectedOption(next, 'croma', groupId, opt);
       const line = next.lines.find((l) => l.categoryId === 'croma');
-      if (line) next = setEntornos(next, line.key, 4, cat?.entornos?.priceEach ?? 10);
+      if (line) {
+        next = setEntornos(next, line.key, 4, cat?.entornos?.priceEach ?? 10);
+        next = setEntornosLocked(next, line.key, true);
+      }
     }
   } else if (preset === 'vfx-full-all') {
     const cat = getCategory('vfx');
     const opt = cat?.groups[0]?.options.find((o) => o.id === 'vfx-full');
     const groupId = cat?.groups[0]?.id ?? 'vfx-paquete';
-    if (opt) next = toggleLine(next, lineFromOption('vfx', groupId, opt, 'single'), true);
+    if (opt) next = withSelectedOption(next, 'vfx', groupId, opt);
   } else if (preset === 'visual-25d') {
     const cat = getCategory('visual');
     const opt = cat?.groups[0]?.options.find((o) => o.id === 'visual-25d-imagen');
     const groupId = cat?.groups[0]?.id ?? 'visual-tipo';
-    if (opt) next = toggleLine(next, lineFromOption('visual', groupId, opt, 'single'), true);
+    if (opt) next = withSelectedOption(next, 'visual', groupId, opt);
   }
   return next;
 }
@@ -274,16 +301,18 @@ export function initConfigurator(options: { lang?: Lang } = {}) {
     renderConfigurator(state);
   });
 
+  const activateCategory = (categoryId: string) => {
+    document.querySelectorAll<HTMLButtonElement>('.cat-tab').forEach((x) => {
+      x.setAttribute('aria-selected', x.dataset.category === categoryId ? 'true' : 'false');
+    });
+    document.querySelectorAll<HTMLElement>('.cat-panel').forEach((p) => {
+      p.hidden = p.dataset.panel !== categoryId;
+    });
+  };
+
   document.querySelectorAll<HTMLButtonElement>('.cat-tab').forEach((t) => {
     t.addEventListener('click', () => {
-      document.querySelectorAll<HTMLButtonElement>('.cat-tab').forEach((x) => x.setAttribute('aria-selected', 'false'));
-      document.querySelectorAll<HTMLElement>('.cat-panel').forEach((p) => (p.hidden = true));
-      t.setAttribute('aria-selected', 'true');
-      const cat = t.dataset.category;
-      if (cat) {
-        const panel = document.getElementById(`panel-${cat}`);
-        if (panel) panel.hidden = false;
-      }
+      if (t.dataset.category) activateCategory(t.dataset.category);
     });
   });
 
@@ -313,8 +342,16 @@ export function initConfigurator(options: { lang?: Lang } = {}) {
       const panel = btn.closest<HTMLElement>('.cat-panel');
       const select = panel?.querySelector<HTMLSelectElement>('.entornos-select');
       if (select && isSelected(state, { categoryId: catId, groupId, optionId })) {
-        const count = Number(select.value);
-        state = setEntornos(state, line.key, count, count > 0 ? 10 : 0);
+        const cat = getCategory(catId);
+        if (optionSupportsEntornos(catId, optionId)) {
+          const fallback = Number(select.dataset.default || cat?.entornos?.defaultValue || 1);
+          const current = Number(select.value);
+          const count = current > 0 ? current : fallback;
+          state = setEntornos(state, line.key, count, cat?.entornos?.priceEach ?? 10);
+        } else {
+          state = setEntornos(state, line.key, 0, 0);
+        }
+        state = setEntornosLocked(state, line.key, false);
       }
       persist();
     });
@@ -352,9 +389,10 @@ export function initConfigurator(options: { lang?: Lang } = {}) {
       const catId = sel.closest<HTMLElement>('.cat-panel')?.dataset.panel as CategoryId | undefined;
       if (!catId) return;
       const line = state.lines.find((l) => l.categoryId === catId);
-      if (!line) return;
+      if (!line || line.entornosLocked || !optionSupportsEntornos(catId, line.optionId)) return;
       const count = Number(sel.value);
-      state = setEntornos(state, line.key, count, count > 0 ? 10 : 0);
+      if (count < 1) return;
+      state = setEntornos(state, line.key, count, getCategory(catId)?.entornos?.priceEach ?? 10);
       persist();
     });
   });
@@ -439,14 +477,28 @@ export function initConfigurator(options: { lang?: Lang } = {}) {
     emit(state);
   }
 
-  // Recomendados: un clic arma el pedido y abre el carrito.
+  const scrollToDuration = () => {
+    const block = document.getElementById('duration-block');
+    if (!block) return;
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    block.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'center' });
+    block.classList.remove('duration-highlight');
+    void block.offsetWidth;
+    block.classList.add('duration-highlight');
+    window.setTimeout(() => block.classList.remove('duration-highlight'), 1600);
+  };
+
+  // Recomendados: un clic arma el pedido y lleva al selector de duración,
+  // sin abrir el carrito.
   document.querySelectorAll<HTMLButtonElement>('.preset-card').forEach((btn) => {
     btn.addEventListener('click', () => {
       const preset = btn.dataset.preset || '';
       if (!preset) return;
       state = applyPreset(state, preset);
       persist();
-      window.dispatchEvent(new CustomEvent('vfxbyflex:open-cart'));
+      const categoryId = btn.dataset.category;
+      if (categoryId) activateCategory(categoryId);
+      scrollToDuration();
     });
   });
 }

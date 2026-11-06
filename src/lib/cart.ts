@@ -20,6 +20,8 @@ export interface CartLine {
   promo: boolean;
   entornos?: number;
   entornoPriceEach?: number;
+  // A preset can fix the environments count; the selector stays disabled.
+  entornosLocked?: boolean;
   addons?: CartAddon[];
   // Selected components of a package (bundle). undefined = not a package.
   components?: string[];
@@ -91,6 +93,13 @@ export function setEntornos(state: CartState, key: string, entornos: number, ent
     lines: state.lines.map((l) =>
       l.key === key ? { ...l, entornos, entornoPriceEach: entornoPriceEach ?? l.entornoPriceEach } : l
     ),
+  };
+}
+
+export function setEntornosLocked(state: CartState, key: string, locked: boolean): CartState {
+  return {
+    ...state,
+    lines: state.lines.map((l) => (l.key === key ? { ...l, entornosLocked: locked } : l)),
   };
 }
 

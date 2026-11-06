@@ -54,6 +54,15 @@ body {
   animation: marquee 88s linear infinite;
 }
 
+/* Brief flash that points the client to the duration selector after a preset. */
+.duration-highlight {
+  animation: duration-highlight 1.6s ease-out;
+}
+@keyframes duration-highlight {
+  0%, 100% { background-color: transparent; }
+  30% { background-color: rgb(183 255 46 / 0.35); }
+}
+
 .promo-stripes {
   background-image: repeating-linear-gradient(
     45deg,

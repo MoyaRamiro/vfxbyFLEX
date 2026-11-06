@@ -197,6 +197,14 @@ export function isExtra(categoryId: CategoryId): boolean {
   return categoryId === 'extras';
 }
 
+// Only the first two Croma modalities let the client choose how many
+// environments to composite. The other two have a fixed scope.
+export const CROMA_ENTORNOS_OPTIONS = ['croma-25d-3d', 'croma-mezclado'] as const;
+
+export function optionSupportsEntornos(categoryId: CategoryId, optionId: string): boolean {
+  return categoryId === 'croma' && (CROMA_ENTORNOS_OPTIONS as readonly string[]).includes(optionId);
+}
+
 export function getBundle(categoryId: CategoryId, optionId: string): BundleComponent[] | undefined {
   return getOption(categoryId, optionId)?.bundle;
 }

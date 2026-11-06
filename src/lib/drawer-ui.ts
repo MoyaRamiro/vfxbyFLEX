@@ -204,8 +204,5 @@ export function initDrawer(options: { lang?: Lang } = {}) {
     render();
   });
 
-  // Los presets de "Recomendados" piden abrir el carrito tras agregar.
-  window.addEventListener('vfxbyflex:open-cart', () => open());
-
   render();
 }

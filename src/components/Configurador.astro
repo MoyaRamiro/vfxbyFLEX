@@ -211,7 +211,8 @@ const componentVideo = (id: string): string | undefined => {
                 {c.entornos && (
                   <label class="mt-4 flex items-center gap-3 text-sm font-medium">
                     {t('quantityEnvironments')}
-                    <select class="entornos-select border-2 border-ink px-3 py-2 bg-paper" data-default={c.entornos.defaultValue} aria-label={t('quantityEnvironments')}>
+                    <select class="entornos-select border-2 border-ink px-3 py-2 bg-paper disabled:opacity-40 disabled:cursor-not-allowed disabled:bg-surface disabled:text-muted" data-default={c.entornos.defaultValue} aria-label={t('quantityEnvironments')}>
+                      <option value="0" disabled>{t('notApplicable')}</option>
                       {Array.from({ length: c.entornos.max - c.entornos.min + 1 }, (_, n) => c.entornos!.min + n).map((n) => (
                         <option value={n} selected={n === c.entornos!.defaultValue}>{n} {n === 1 ? t('environment') : t('environmentsPlural')} (+USD {money(n * c.entornos!.priceEach)})</option>
                       ))}
@@ -225,7 +226,7 @@ const componentVideo = (id: string): string | undefined => {
       </div>
 
       <aside class="flex flex-col gap-6 border-2 border-ink bg-paper p-6 lg:sticky lg:top-6">
-        <div>
+        <div id="duration-block" class="scroll-mt-8">
           <label for="duration-slider" class="font-mono text-xs tracking-widest text-muted">{t('duration')}</label>
           <div class="flex items-baseline justify-between mt-2 mb-3">
             <output id="duration-value" for="duration-slider" class="text-3xl font-bold font-mono">2:00</output>
